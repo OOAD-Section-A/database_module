@@ -21,4 +21,23 @@ public final class ReportingModels {
                                      LocalDateTime timestamp, String requestedBy,
                                      String justificationText) {
     }
+
+    public record DashboardReportRow(String orderId, LocalDateTime orderDate, LocalDateTime deliveryDate,
+                                     String orderStatus, Double fulfillmentTime, Integer orderQuantity,
+                                     String productId, String productName, Integer currentStockLevel,
+                                     Integer reorderLevel, Boolean stockOutFlag,
+                                     Double inventoryTurnoverRate, String supplierId, String supplierName,
+                                     Double supplierPerformanceScore, Double leadTime,
+                                     Double onTimeSupplyRate, String shipmentId,
+                                     LocalDateTime dispatchDate, String deliveryStatus,
+                                     Double transitTime, Boolean delayFlag, String deliveryLocation,
+                                     String warehouseId, Integer storageCapacity,
+                                     Double utilizationRate, Integer inboundQuantity,
+                                     Integer outboundQuantity, BigDecimal productPrice,
+                                     BigDecimal discountApplied, Integer salesVolume,
+                                     BigDecimal revenue, Integer demandForecast,
+                                     String forecastPeriod, Integer predictedInventoryNeeds,
+                                     String exceptionId, String exceptionType,
+                                     String severityLevel, LocalDateTime timestamp) {
+    }
 }

@@ -10,6 +10,7 @@ public class Shipment {
     private String customerId;
     private String deliveryAddress;
     private String deliveryStatus;
+    private LocalDateTime deliveryDate;
     private String deliveryType;
     private BigDecimal deliveryCost;
     private String assignedAgent;
@@ -24,11 +25,20 @@ public class Shipment {
                     String deliveryStatus, String deliveryType, BigDecimal deliveryCost,
                     String assignedAgent, String warehouseId, LocalDateTime createdAt,
                     LocalDateTime updatedAt) {
+        this(deliveryId, orderId, customerId, deliveryAddress, deliveryStatus, null, deliveryType,
+                deliveryCost, assignedAgent, warehouseId, createdAt, updatedAt);
+    }
+
+    public Shipment(String deliveryId, String orderId, String customerId, String deliveryAddress,
+                    String deliveryStatus, LocalDateTime deliveryDate, String deliveryType, BigDecimal deliveryCost,
+                    String assignedAgent, String warehouseId, LocalDateTime createdAt,
+                    LocalDateTime updatedAt) {
         this.deliveryId = deliveryId;
         this.orderId = orderId;
         this.customerId = customerId;
         this.deliveryAddress = deliveryAddress;
         this.deliveryStatus = deliveryStatus;
+        this.deliveryDate = deliveryDate;
         this.deliveryType = deliveryType;
         this.deliveryCost = deliveryCost;
         this.assignedAgent = assignedAgent;
@@ -79,6 +89,14 @@ public class Shipment {
 
     public String getDeliveryType() {
         return deliveryType;
+    }
+
+    public LocalDateTime getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(LocalDateTime deliveryDate) {
+        this.deliveryDate = deliveryDate;
     }
 
     public void setDeliveryType(String deliveryType) {

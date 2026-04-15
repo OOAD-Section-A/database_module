@@ -10,7 +10,7 @@ public final class CommissionModels {
     }
 
     public record Agent(String agentId, String agentName, int level,
-                        String parentAgentId, String status) {
+                        String parentAgentId, String downstreamAgents, String status) {
     }
 
     public record CommissionSale(String saleId, String agentId, BigDecimal saleAmount,
@@ -22,7 +22,7 @@ public final class CommissionModels {
     }
 
     public record CommissionHistory(String commissionId, String agentId, LocalDate periodStart,
-                                    LocalDate periodEnd, BigDecimal totalSales,
+                                    LocalDate periodEnd, BigDecimal totalSales, String tierBreakdown,
                                     BigDecimal totalCommission, LocalDateTime calculatedAt) {
     }
 }

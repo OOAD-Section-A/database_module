@@ -52,6 +52,24 @@ public class ReturnsSubsystemFacade {
                         resultSet.getTimestamp("created_at").toLocalDateTime()));
     }
 
+    public void updateDefectDetails(String returnRequestId, String defectDetails) {
+        jdbcOperations.update(
+                "UPDATE product_returns SET defect_details = ? WHERE return_request_id = ?",
+                statement -> {
+                    statement.setString(1, defectDetails);
+                    statement.setString(2, returnRequestId);
+                });
+    }
+
+    public void updateCustomerFeedback(String returnRequestId, String customerFeedback) {
+        jdbcOperations.update(
+                "UPDATE product_returns SET customer_feedback = ? WHERE return_request_id = ?",
+                statement -> {
+                    statement.setString(1, customerFeedback);
+                    statement.setString(2, returnRequestId);
+                });
+    }
+
     public void createReturnGrowthStatistic(ReturnGrowthStatistic statistic) {
         jdbcOperations.update(
                 "INSERT INTO return_growth_statistics (growth_stat_id, return_request_id, metric_period, return_rate, resolution_rate, recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -63,5 +81,17 @@ public class ReturnsSubsystemFacade {
                     statement.setBigDecimal(5, statistic.resolutionRate());
                     statement.setTimestamp(6, Timestamp.valueOf(statistic.recordedAt()));
                 });
+    }
+
+    public List<ReturnGrowthStatistic> listReturnGrowthStatistics() {
+        return jdbcOperations.query(
+                "SELECT * FROM return_growth_statistics",
+                resultSet -> new ReturnGrowthStatistic(
+                        resultSet.getString("growth_stat_id"),
+                        resultSet.getString("return_request_id"),
+                        resultSet.getString("metric_period"),
+                        resultSet.getBigDecimal("return_rate"),
+                        resultSet.getBigDecimal("resolution_rate"),
+                        resultSet.getTimestamp("recorded_at").toLocalDateTime()));
     }
 }

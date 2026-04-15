@@ -2,7 +2,6 @@ package com.jackfruit.scm.database.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public final class DemandForecastingModels {
 
@@ -27,6 +26,14 @@ public final class DemandForecastingModels {
     public record ProductLifecycleStage(String lifecycleId, String productId, String currentStage,
                                         LocalDate stageStartDate, String previousStage,
                                         LocalDate transitionDate) {
+    }
+
+    public record ProductMetadata(String productId, String productName, String category,
+                                  String subCategory, String seasonalityType) {
+    }
+
+    public record InventorySupply(String productId, Integer currentStock, Integer reorderPoint,
+                                  Integer leadTimeDays, String supplierId) {
     }
 
     public record ForecastPerformanceMetric(String evalId, String forecastId, LocalDate forecastDate,

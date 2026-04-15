@@ -39,8 +39,8 @@ public class ExceptionService {
         ValidationUtils.requireText(subsystemException.getSeverity(), "severity");
         ValidationUtils.requireText(subsystemException.getExceptionMessage(), "exceptionMessage");
         ValidationUtils.requireText(subsystemException.getStatus(), "status");
-        if (subsystemException.getCreatedAt() == null) {
-            throw new IllegalArgumentException("createdAt cannot be null");
+        if (subsystemException.getTimestampUtc() == null) {
+            throw new IllegalArgumentException("timestampUtc cannot be null");
         }
     }
 }

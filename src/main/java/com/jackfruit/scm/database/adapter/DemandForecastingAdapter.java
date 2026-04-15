@@ -3,6 +3,11 @@ package com.jackfruit.scm.database.adapter;
 import com.jackfruit.scm.database.facade.SupplyChainDatabaseFacade;
 import com.jackfruit.scm.database.model.DemandForecast;
 import com.jackfruit.scm.database.model.DemandForecastingModels.ForecastPerformanceMetric;
+import com.jackfruit.scm.database.model.DemandForecastingModels.HolidayCalendar;
+import com.jackfruit.scm.database.model.DemandForecastingModels.InventorySupply;
+import com.jackfruit.scm.database.model.DemandForecastingModels.ProductLifecycleStage;
+import com.jackfruit.scm.database.model.DemandForecastingModels.ProductMetadata;
+import com.jackfruit.scm.database.model.DemandForecastingModels.PromotionalCalendar;
 import com.jackfruit.scm.database.model.DemandForecastingModels.SalesRecord;
 
 public class DemandForecastingAdapter {
@@ -19,6 +24,26 @@ public class DemandForecastingAdapter {
 
     public void createSalesRecord(SalesRecord salesRecord) {
         facade.demandForecasting().createSalesRecord(salesRecord);
+    }
+
+    public void createHolidayCalendar(HolidayCalendar holidayCalendar) {
+        facade.demandForecasting().createHolidayCalendar(holidayCalendar);
+    }
+
+    public void createPromotionalCalendar(PromotionalCalendar promotionalCalendar) {
+        facade.demandForecasting().createPromotionalCalendar(promotionalCalendar);
+    }
+
+    public void createProductMetadata(ProductMetadata productMetadata) {
+        facade.demandForecasting().createProductMetadata(productMetadata);
+    }
+
+    public void createProductLifecycleStage(ProductLifecycleStage stage) {
+        facade.demandForecasting().createProductLifecycleStage(stage);
+    }
+
+    public void createInventorySupply(InventorySupply inventorySupply) {
+        facade.demandForecasting().createInventorySupply(inventorySupply);
     }
 
     public void createForecastPerformanceMetric(ForecastPerformanceMetric metric) {

@@ -1,5 +1,6 @@
 package com.jackfruit.scm.database.facade;
 
+import com.jackfruit.scm.database.config.DatabaseConnectionManager;
 import com.jackfruit.scm.database.dao.DAOFactory;
 import com.jackfruit.scm.database.facade.subsystem.BarcodeSubsystemFacade;
 import com.jackfruit.scm.database.facade.subsystem.CommissionSubsystemFacade;
@@ -41,7 +42,7 @@ import com.jackfruit.scm.database.service.WarehouseService;
 import java.util.List;
 import java.util.Optional;
 
-public class SupplyChainDatabaseFacade {
+public class SupplyChainDatabaseFacade implements AutoCloseable {
 
     private final WarehouseService warehouseService;
     private final PricingService pricingService;
@@ -229,5 +230,10 @@ public class SupplyChainDatabaseFacade {
 
     public void logSubsystemException(SubsystemException subsystemException) {
         exceptionService.logException(subsystemException);
+    }
+
+    @Override
+    public void close() {
+        DatabaseConnectionManager.getInstance().shutdown();
     }
 }
