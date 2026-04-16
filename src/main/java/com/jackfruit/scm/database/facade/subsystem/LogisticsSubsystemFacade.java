@@ -76,14 +76,15 @@ public class LogisticsSubsystemFacade {
 
     public void createRoute(LogisticsRoute route) {
         jdbcOperations.update(
-                "INSERT INTO logistics_routes (route_id, shipment_id, current_eta, timeline_stage, route_status, requires_rerouting) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO logistics_routes (route_id, shipment_id, gps_coordinates, current_eta, timeline_stage, route_status, requires_rerouting) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 statement -> {
                     statement.setString(1, route.routeId());
                     statement.setString(2, route.shipmentId());
-                    statement.setTimestamp(3, route.currentEta() == null ? null : Timestamp.valueOf(route.currentEta()));
-                    statement.setString(4, route.timelineStage());
-                    statement.setString(5, route.routeStatus());
-                    statement.setBoolean(6, route.requiresRerouting());
+                    statement.setString(3, route.gpsCoordinates());
+                    statement.setTimestamp(4, route.currentEta() == null ? null : Timestamp.valueOf(route.currentEta()));
+                    statement.setString(5, route.timelineStage());
+                    statement.setString(6, route.routeStatus());
+                    statement.setBoolean(7, route.requiresRerouting());
                 });
     }
 

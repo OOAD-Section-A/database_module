@@ -2,6 +2,11 @@ package com.jackfruit.scm.database.facade.subsystem;
 
 import com.jackfruit.scm.database.model.DemandForecast;
 import com.jackfruit.scm.database.model.DemandForecastingModels.ForecastPerformanceMetric;
+import com.jackfruit.scm.database.model.DemandForecastingModels.HolidayCalendar;
+import com.jackfruit.scm.database.model.DemandForecastingModels.InventorySupply;
+import com.jackfruit.scm.database.model.DemandForecastingModels.ProductLifecycleStage;
+import com.jackfruit.scm.database.model.DemandForecastingModels.ProductMetadata;
+import com.jackfruit.scm.database.model.DemandForecastingModels.PromotionalCalendar;
 import com.jackfruit.scm.database.model.DemandForecastingModels.SalesRecord;
 import com.jackfruit.scm.database.service.ForecastService;
 import com.jackfruit.scm.database.service.JdbcOperations;
@@ -53,6 +58,98 @@ public class DemandForecastingSubsystemFacade {
                         resultSet.getBigDecimal("unit_price"),
                         resultSet.getBigDecimal("revenue"),
                         resultSet.getString("region")));
+    }
+
+    public void createHolidayCalendar(HolidayCalendar holidayCalendar) {
+        jdbcOperations.update(
+                "INSERT INTO holiday_calendar (holiday_id, holiday_date, holiday_name, holiday_type, region_applicable) VALUES (?, ?, ?, ?, ?)",
+                statement -> {
+                    statement.setString(1, holidayCalendar.holidayId());
+                    statement.setDate(2, Date.valueOf(holidayCalendar.holidayDate()));
+                    statement.setString(3, holidayCalendar.holidayName());
+                    statement.setString(4, holidayCalendar.holidayType());
+                    statement.setString(5, holidayCalendar.regionApplicable());
+                });
+    }
+
+    public void createPromotionalCalendar(PromotionalCalendar promotionalCalendar) {
+        jdbcOperations.update(
+                """
+                INSERT INTO promotional_calendar
+                (promo_calendar_id, promo_id, promo_name, promo_start_date, promo_end_date, discount_percentage, promo_type, applicable_products)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, promotionalCalendar.promoCalendarId());
+                    statement.setString(2, promotionalCalendar.promoId());
+                    statement.setString(3, promotionalCalendar.promoName());
+                    statement.setDate(4, Date.valueOf(promotionalCalendar.promoStartDate()));
+                    statement.setDate(5, Date.valueOf(promotionalCalendar.promoEndDate()));
+                    statement.setBigDecimal(6, promotionalCalendar.discountPercentage());
+                    statement.setString(7, promotionalCalendar.promoType());
+                    statement.setString(8, promotionalCalendar.applicableProducts());
+                });
+    }
+
+    public void createProductMetadata(ProductMetadata productMetadata) {
+        jdbcOperations.update(
+                """
+                INSERT INTO product_metadata
+                (product_id, product_name, category, sub_category, seasonality_type)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, productMetadata.productId());
+                    statement.setString(2, productMetadata.productName());
+                    statement.setString(3, productMetadata.category());
+                    statement.setString(4, productMetadata.subCategory());
+                    statement.setString(5, productMetadata.seasonalityType());
+                });
+    }
+
+    public void createProductLifecycleStage(ProductLifecycleStage stage) {
+        jdbcOperations.update(
+                """
+                INSERT INTO product_lifecycle_stages
+                (lifecycle_id, product_id, current_stage, stage_start_date, previous_stage, transition_date)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, stage.lifecycleId());
+                    statement.setString(2, stage.productId());
+                    statement.setString(3, stage.currentStage());
+                    statement.setDate(4, Date.valueOf(stage.stageStartDate()));
+                    statement.setString(5, stage.previousStage());
+                    statement.setDate(6, stage.transitionDate() == null ? null : Date.valueOf(stage.transitionDate()));
+                });
+    }
+
+    public void createInventorySupply(InventorySupply inventorySupply) {
+        jdbcOperations.update(
+                """
+                INSERT INTO inventory_supply
+                (product_id, current_stock, reorder_point, lead_time_days, supplier_id)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, inventorySupply.productId());
+                    if (inventorySupply.currentStock() == null) {
+                        statement.setNull(2, java.sql.Types.INTEGER);
+                    } else {
+                        statement.setInt(2, inventorySupply.currentStock());
+                    }
+                    if (inventorySupply.reorderPoint() == null) {
+                        statement.setNull(3, java.sql.Types.INTEGER);
+                    } else {
+                        statement.setInt(3, inventorySupply.reorderPoint());
+                    }
+                    if (inventorySupply.leadTimeDays() == null) {
+                        statement.setNull(4, java.sql.Types.INTEGER);
+                    } else {
+                        statement.setInt(4, inventorySupply.leadTimeDays());
+                    }
+                    statement.setString(5, inventorySupply.supplierId());
+                });
     }
 
     public void createForecastPerformanceMetric(ForecastPerformanceMetric metric) {

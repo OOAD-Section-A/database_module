@@ -1,6 +1,7 @@
 package com.jackfruit.scm.database.adapter;
 
 import com.jackfruit.scm.database.facade.SupplyChainDatabaseFacade;
+import com.jackfruit.scm.database.model.ReportingModels.DashboardReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.ExceptionReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.InventoryStockReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.PriceDiscountReportRow;
@@ -24,5 +25,9 @@ public class ReportingAdapter {
 
     public List<ExceptionReportRow> getExceptionReport() {
         return facade.reporting().getExceptionReport();
+    }
+
+    public List<DashboardReportRow> getDashboardReport() {
+        return facade.reporting().getDashboardReport();
     }
 }

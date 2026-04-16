@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS price_list (
 -- across many customers. (GRASP: Information Expert)
 -- -------------------------------------------------------
 CREATE TABLE IF NOT EXISTS tier_definitions (
-    tier_id                 INT            NOT NULL AUTO_INCREMENT,
+    tier_id                 INT            NOT NULL,
     tier_name               VARCHAR(50)    NOT NULL  COMMENT 'e.g. Bronze, Silver, Gold',
     min_spend_threshold     DECIMAL(12,2)  NOT NULL  COMMENT 'Minimum cumulative spend to qualify',
     default_discount_pct    DECIMAL(5,2)   NOT NULL  COMMENT 'Default discount % for this tier',
@@ -491,6 +491,11 @@ CREATE OR REPLACE VIEW vw_exception_report AS
     WHERE pa.approval_status IN ('REJECTED','ESCALATED');
 
 
+-- vw_reporting_dashboard is created later in the file after all
+-- dependent tables have been defined (orders, products, delivery_orders,
+-- demand_forecasts, subsystem_exceptions, commission_sales, etc.).
+
+
 -- ============================================================
 -- SUBSYSTEM 4 — UI SUBSYSTEM (PERSISTED DATA ONLY)
 -- Only data that is genuinely stored in the DB is modelled.
@@ -506,6 +511,8 @@ CREATE TABLE IF NOT EXISTS ui_users (
     user_id                 INT            NOT NULL AUTO_INCREMENT,
     username                VARCHAR(100)   NOT NULL,
     password_hash           VARCHAR(255)   NOT NULL  COMMENT 'bcrypt hash; never store plaintext',
+    two_factor_token        INT            NULL,
+    authorized_menu_items   TEXT           NULL,
     user_role               ENUM('ADMIN','MANAGER','SALES_REP','WAREHOUSE_STAFF',
                                  'CASHIER','ANALYST','DRIVER') NOT NULL,
     is_account_locked       BOOLEAN        NOT NULL  DEFAULT FALSE,
@@ -552,7 +559,11 @@ CREATE TABLE IF NOT EXISTS ui_panel_state (
     panel_state_id      INT            NOT NULL AUTO_INCREMENT,
     user_id             INT            NOT NULL,
     panel_id            VARCHAR(50)    NOT NULL,
+    notification_count  INT            NULL,
     current_panel_state VARCHAR(100)   NOT NULL,
+    breadcrumb_trail    TEXT           NULL,
+    sidebar_menu_items  TEXT           NULL,
+    active_user_role    VARCHAR(50)    NULL,
     updated_at          DATETIME       NOT NULL  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (panel_state_id),
@@ -688,6 +699,9 @@ CREATE TABLE IF NOT EXISTS stock_levels (
     reorder_threshold     INT            NOT NULL COMMENT 'Minimum stock before reorder',
     reorder_quantity      INT            NOT NULL COMMENT 'Suggested reorder quantity',
     safety_stock_level    INT            NOT NULL COMMENT 'Buffer stock to avoid stockouts',
+    zone_assignment       VARCHAR(100)   NULL COMMENT 'Zone assignment for stock placement',
+    stock_health_status   VARCHAR(50)    NULL COMMENT 'Healthy, low stock, critical, etc.',
+    snapshot_timestamp    DATETIME       NULL COMMENT 'Inventory snapshot time',
     last_updated          DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (stock_level_id),
@@ -711,6 +725,9 @@ CREATE TABLE IF NOT EXISTS products (
     sub_category          VARCHAR(100)   NOT NULL,
     supplier_id           VARCHAR(50)    NOT NULL COMMENT 'Ref to Supplier subsystem',
     unit_of_measure       VARCHAR(20)    NOT NULL COMMENT 'e.g. PCS, KG, LITRE',
+    zone                  VARCHAR(100)   NULL COMMENT 'Default storage or catalog zone',
+    reorder_threshold     INT            NULL COMMENT 'Product-level reorder threshold',
+    product_image_reference VARCHAR(255) NULL COMMENT 'External image reference for catalog UI',
     storage_conditions    VARCHAR(255)   NULL COMMENT 'Temperature, humidity constraints',
     shelf_life_days       INT            NULL COMMENT 'Expected usable duration',
     created_at            DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -732,6 +749,12 @@ CREATE TABLE IF NOT EXISTS product_batches (
     manufacturing_date    DATE           NOT NULL,
     supplier_id           VARCHAR(50)    NOT NULL,
     batch_status          VARCHAR(50)    NOT NULL COMMENT 'e.g. ACTIVE, BLOCKED',
+    linked_sku            VARCHAR(50)    NULL,
+    quantity_received     INT            NULL,
+    receipt_date          DATETIME       NULL,
+    expiry_date           DATE           NULL,
+    lot_status            VARCHAR(50)    NULL,
+    perishability_flag    BOOLEAN        NULL,
     received_date         DATETIME       NOT NULL,
 
     PRIMARY KEY (batch_id)
@@ -750,6 +773,8 @@ CREATE TABLE IF NOT EXISTS expiry_tracking (
     days_remaining        INT            NOT NULL,
     expiry_status         VARCHAR(50)    NOT NULL COMMENT 'VALID, EXPIRING, EXPIRED',
     alert_flag            BOOLEAN        NOT NULL COMMENT 'Triggers alert if TRUE',
+    expiry_trigger_flag   VARCHAR(50)    NULL,
+    lot_status            VARCHAR(50)    NULL,
 
     PRIMARY KEY (expiry_id)
 ) COMMENT 'Tracks expiry status and alert conditions';
@@ -769,6 +794,11 @@ CREATE TABLE IF NOT EXISTS stock_adjustments (
     reason                VARCHAR(255)   NOT NULL,
     adjusted_by           VARCHAR(50)    NOT NULL COMMENT 'Employee reference',
     adjusted_at           DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sku_reference         VARCHAR(50)    NULL,
+    performer             VARCHAR(50)    NULL,
+    reason_note           VARCHAR(255)   NULL,
+    audit_lock_flag       BOOLEAN        NOT NULL DEFAULT FALSE,
+    adjustment_date       DATETIME       NULL,
 
     PRIMARY KEY (adjustment_id),
 
@@ -790,6 +820,10 @@ CREATE TABLE IF NOT EXISTS reorder_management (
     supplier_id           VARCHAR(50)    NOT NULL,
     reorder_status        VARCHAR(50)    NOT NULL COMMENT 'PENDING, ORDERED',
     last_reorder_date     DATETIME       NULL,
+    supplier_name         VARCHAR(150)   NULL,
+    suggested_reorder_qty INT            NULL,
+    order_date            DATETIME       NULL,
+    order_reference       VARCHAR(100)   NULL,
 
     PRIMARY KEY (reorder_id)
 ) COMMENT 'Reorder decision and supplier linkage';
@@ -808,6 +842,8 @@ CREATE TABLE IF NOT EXISTS stock_reservations (
     reservation_status    VARCHAR(50)    NOT NULL COMMENT 'ACTIVE, RELEASED',
     reserved_at           DATETIME       NOT NULL,
     expiry_time           DATETIME       NULL,
+    linked_sku            VARCHAR(50)    NULL,
+    reserved_quantity     INT            NULL,
 
     PRIMARY KEY (reservation_id),
 
@@ -828,6 +864,10 @@ CREATE TABLE IF NOT EXISTS stock_freeze (
     freeze_reason         VARCHAR(255)   NOT NULL,
     frozen_by             VARCHAR(50)    NOT NULL,
     frozen_at             DATETIME       NOT NULL,
+    freeze_status_flag    BOOLEAN        NULL,
+    reason_for_freeze     VARCHAR(255)   NULL,
+    freeze_applied_by     VARCHAR(50)    NULL,
+    freeze_timestamp      DATETIME       NULL,
 
     PRIMARY KEY (freeze_id)
 ) COMMENT 'Controls stock freezing for restricted items';
@@ -845,6 +885,7 @@ CREATE TABLE IF NOT EXISTS dead_stock (
     stagnant_days         INT            NOT NULL,
     stagnant_quantity     INT            NOT NULL,
     action_flag           VARCHAR(50)    NOT NULL COMMENT 'CLEARANCE, HOLD',
+    action_status         VARCHAR(50)    NULL,
 
     PRIMARY KEY (dead_stock_id)
 ) COMMENT 'Detects and flags non-moving stock';
@@ -863,6 +904,12 @@ CREATE TABLE IF NOT EXISTS stock_valuation (
     total_value           DECIMAL(14,2)  NOT NULL,
     reserved_value        DECIMAL(14,2)  NOT NULL,
     valuation_method      VARCHAR(50)    NOT NULL COMMENT 'FIFO, LIFO, AVG',
+    total_inventory_value DECIMAL(14,2)  NULL,
+    reserved_stock_value  DECIMAL(14,2)  NULL,
+    dead_stock_value      DECIMAL(14,2)  NULL,
+    monthly_writeoff_value DECIMAL(14,2) NULL,
+    stock_value_by_category TEXT         NULL,
+    monthly_valuation_trend TEXT         NULL,
 
     PRIMARY KEY (valuation_id)
 ) COMMENT 'Financial valuation of inventory stock';
@@ -880,7 +927,37 @@ CREATE TABLE IF NOT EXISTS stock_valuation (
 CREATE TABLE IF NOT EXISTS fulfillment_orders (
     fulfillment_id        VARCHAR(50)    NOT NULL,
     order_id              VARCHAR(50)    NOT NULL,
+    customer_id           VARCHAR(50)    NULL,
+    product_id            VARCHAR(50)    NULL,
+    quantity              INT            NULL,
+    order_status          VARCHAR(50)    NULL,
+    order_date            DATETIME       NULL,
+    total_amount          DECIMAL(12,2)  NULL,
+    customer_name         VARCHAR(150)   NULL,
+    shipping_address      TEXT           NULL,
+    contact_number        VARCHAR(50)    NULL,
+    payment_id            VARCHAR(50)    NULL,
+    payment_status        VARCHAR(50)    NULL,
+    payment_method        VARCHAR(50)    NULL,
+    product_stock_available INT          NULL,
+    reserved_quantity     INT            NULL,
+    warehouse_id          VARCHAR(50)    NULL,
+    storage_location_rack_id VARCHAR(100) NULL,
+    picking_status        VARCHAR(50)    NULL,
+    packing_status        VARCHAR(50)    NULL,
+    shipment_id           VARCHAR(50)    NULL,
+    courier_partner       VARCHAR(100)   NULL,
+    tracking_id           VARCHAR(100)   NULL,
+    shipping_status       VARCHAR(50)    NULL,
+    estimated_delivery_date DATE         NULL,
     fulfillment_status    VARCHAR(50)    NOT NULL,
+    assigned_staff_id     VARCHAR(50)    NULL,
+    reservation_timestamp DATETIME       NULL,
+    delivery_instructions TEXT           NULL,
+    failed_delivery_attempts INT         NULL,
+    cancellation_status   VARCHAR(50)    NULL,
+    cancellation_reason   TEXT           NULL,
+    cancellation_timestamp DATETIME      NULL,
     assigned_warehouse    VARCHAR(50)    NOT NULL,
     priority_level        VARCHAR(50)    NOT NULL,
     created_at            DATETIME       NOT NULL,
@@ -913,6 +990,7 @@ CREATE TABLE IF NOT EXISTS agents (
     agent_name            VARCHAR(150)   NOT NULL,
     level                 INT            NOT NULL,
     parent_agent_id       VARCHAR(50)    NULL,
+    downstream_agents     TEXT           NULL,
     status                VARCHAR(50)    NOT NULL,
 
     PRIMARY KEY (agent_id)
@@ -947,6 +1025,7 @@ CREATE TABLE IF NOT EXISTS commission_history (
     period_start          DATE           NOT NULL,
     period_end            DATE           NOT NULL,
     total_sales           DECIMAL(14,2)  NOT NULL,
+    tier_breakdown        TEXT           NULL,
     total_commission      DECIMAL(14,2)  NOT NULL,
     calculated_at         DATETIME       NOT NULL,
 
@@ -1001,6 +1080,7 @@ CREATE TABLE IF NOT EXISTS delivery_orders (
     customer_id           VARCHAR(50)    NOT NULL,
     delivery_address      TEXT           NOT NULL,
     delivery_status       VARCHAR(50)    NOT NULL,
+    delivery_date         DATETIME       NULL,
     delivery_type         VARCHAR(50)    NOT NULL,
     delivery_cost         DECIMAL(10,2)  NOT NULL,
     assigned_agent        VARCHAR(50)    NULL,
@@ -1021,8 +1101,35 @@ CREATE TABLE IF NOT EXISTS delivery_orders (
 CREATE TABLE IF NOT EXISTS delivery_tracking_routes (
     route_plan_id                    VARCHAR(50)    NOT NULL,
     delivery_id                      VARCHAR(50)    NOT NULL,
+    order_id                         VARCHAR(50)    NULL,
+    customer_id                      VARCHAR(50)    NULL,
+    pickup_address                   TEXT           NULL,
+    dropoff_address                  TEXT           NULL,
+    item_description                 TEXT           NULL,
+    item_weight_kg                   DECIMAL(10,2)  NULL,
+    committed_delivery_window_start  DATETIME       NULL,
+    committed_delivery_window_end    DATETIME       NULL,
+    order_created_at                 DATETIME       NULL,
+    dispatched_at                    DATETIME       NULL,
+    warehouse_id                     VARCHAR(50)    NULL,
+    warehouse_latitude               DECIMAL(10,6)  NULL,
+    warehouse_longitude              DECIMAL(10,6)  NULL,
+    rider_id                         VARCHAR(50)    NULL,
+    assigned_at                      DATETIME       NULL,
+    customer_name                    VARCHAR(100)   NULL,
+    customer_email                   VARCHAR(150)   NULL,
+    customer_phone                   VARCHAR(50)    NULL,
+    preferred_notification_channel   VARCHAR(50)    NULL,
+    vehicle_id                       VARCHAR(50)    NULL,
+    plate_number                     VARCHAR(30)    NULL,
+    vehicle_type                     VARCHAR(50)    NULL,
+    max_payload_kg                   DECIMAL(10,2)  NULL,
+    temperature_min_c                DECIMAL(10,2)  NULL,
+    temperature_max_c                DECIMAL(10,2)  NULL,
+    is_hazardous                     BOOLEAN        NULL,
     carrier_id                       VARCHAR(50)    NULL,
     tracking_api_url                 VARCHAR(255)   NULL,
+    waypoints                        TEXT           NULL,
     planned_departure                DATETIME       NULL,
     planned_arrival                  DATETIME       NULL,
     current_eta                      DATETIME       NULL,
@@ -1100,6 +1207,7 @@ CREATE TABLE IF NOT EXISTS shipments (
 CREATE TABLE IF NOT EXISTS logistics_routes (
     route_id                         VARCHAR(50)    NOT NULL,
     shipment_id                      VARCHAR(50)    NOT NULL,
+    gps_coordinates                  VARCHAR(100)   NULL,
     current_eta                      DATETIME       NULL,
     timeline_stage                   VARCHAR(50)    NULL,
     route_status                     VARCHAR(50)    NOT NULL DEFAULT 'PLANNED',
@@ -1261,6 +1369,16 @@ CREATE TABLE IF NOT EXISTS promotional_calendar (
     CONSTRAINT chk_promo_calendar_range CHECK (promo_end_date >= promo_start_date)
 ) COMMENT 'Promotional events used as demand-forecasting features';
 
+CREATE TABLE IF NOT EXISTS product_metadata (
+    product_id                       VARCHAR(50)    NOT NULL,
+    product_name                     VARCHAR(150)   NOT NULL,
+    category                         VARCHAR(100)   NOT NULL,
+    sub_category                     VARCHAR(100)   NULL,
+    seasonality_type                 VARCHAR(100)   NULL,
+
+    PRIMARY KEY (product_id)
+) COMMENT 'Product metadata used by demand forecasting';
+
 
 CREATE TABLE IF NOT EXISTS product_lifecycle_stages (
     lifecycle_id                     VARCHAR(50)    NOT NULL,
@@ -1272,6 +1390,16 @@ CREATE TABLE IF NOT EXISTS product_lifecycle_stages (
 
     PRIMARY KEY (lifecycle_id)
 ) COMMENT 'Lifecycle-stage metadata for products in forecasting';
+
+CREATE TABLE IF NOT EXISTS inventory_supply (
+    product_id                       VARCHAR(50)    NOT NULL,
+    current_stock                    INT            NULL,
+    reorder_point                    INT            NULL,
+    lead_time_days                   INT            NULL,
+    supplier_id                      VARCHAR(50)    NULL,
+
+    PRIMARY KEY (product_id)
+) COMMENT 'Inventory and supply features used by forecasting';
 
 -- -------------------------------------------------------
 -- Component — Forecast Output (Core Table)
@@ -1320,25 +1448,101 @@ CREATE TABLE IF NOT EXISTS forecast_performance_metrics (
 CREATE TABLE IF NOT EXISTS barcode_rfid_events (
     event_id VARCHAR(50) NOT NULL,
     product_id VARCHAR(50) NOT NULL,
-    event_type VARCHAR(30) NOT NULL,
-    source_device VARCHAR(100) NOT NULL,
+    rfid_tag VARCHAR(100) NULL,
+    product_name VARCHAR(150) NULL,
+    category VARCHAR(100) NULL,
+    description TEXT NULL,
+    transaction_id VARCHAR(50) NULL,
     warehouse_id VARCHAR(50) NULL,
     event_timestamp DATETIME NOT NULL,
-    raw_payload TEXT NULL,
+    status VARCHAR(50) NOT NULL,
+    source VARCHAR(100) NOT NULL,
     PRIMARY KEY (event_id)
 );
 
 CREATE TABLE IF NOT EXISTS subsystem_exceptions (
     exception_id VARCHAR(50) NOT NULL,
+    exception_name VARCHAR(150) NULL,
     subsystem_name VARCHAR(100) NOT NULL,
-    reference_id VARCHAR(50) NULL,
     severity VARCHAR(20) NOT NULL,
+    timestamp_utc DATETIME NOT NULL,
+    duration_ms BIGINT NULL,
     exception_message VARCHAR(500) NOT NULL,
+    error_code BIGINT NULL,
+    stack_trace TEXT NULL,
+    inner_exception TEXT NULL,
+    user_account VARCHAR(150) NULL,
+    handling_plan TEXT NULL,
+    retry_count TINYINT UNSIGNED NULL,
     status VARCHAR(30) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     resolved_at DATETIME NULL,
     PRIMARY KEY (exception_id)
 );
+
+CREATE OR REPLACE VIEW vw_reporting_dashboard AS
+    SELECT
+        o.order_id                          AS order_id,
+        o.order_date                        AS order_date,
+        do.delivery_date                    AS delivery_date,
+        o.order_status                      AS order_status,
+        NULL                                AS fulfillment_time,
+        oi.ordered_quantity                 AS order_quantity,
+        oi.product_id                       AS product_id,
+        p.product_name                      AS product_name,
+        sl.current_stock_qty                AS current_stock_level,
+        sl.reorder_threshold                AS reorder_level,
+        CASE
+            WHEN sl.current_stock_qty IS NOT NULL AND sl.current_stock_qty <= 0 THEN TRUE
+            ELSE FALSE
+        END                                 AS stock_out_flag,
+        NULL                                AS inventory_turnover_rate,
+        p.supplier_id                       AS supplier_id,
+        NULL                                AS supplier_name,
+        NULL                                AS supplier_performance_score,
+        NULL                                AS lead_time,
+        NULL                                AS on_time_supply_rate,
+        do.delivery_id                      AS shipment_id,
+        do.created_at                       AS dispatch_date,
+        do.delivery_status                  AS delivery_status,
+        NULL                                AS transit_time,
+        CASE
+            WHEN do.delivery_status IN ('DELAYED', 'FAILED') THEN TRUE
+            ELSE FALSE
+        END                                 AS delay_flag,
+        do.delivery_address                 AS delivery_location,
+        do.warehouse_id                     AS warehouse_id,
+        NULL                                AS storage_capacity,
+        NULL                                AS utilization_rate,
+        NULL                                AS inbound_quantity,
+        NULL                                AS outbound_quantity,
+        pl.base_price                       AS product_price,
+        NULL                                AS discount_applied,
+        df.predicted_demand                 AS sales_volume,
+        cs.sale_amount                      AS revenue,
+        df.predicted_demand                 AS demand_forecast,
+        df.forecast_period                  AS forecast_period,
+        df.suggested_order_qty              AS predicted_inventory_needs,
+        se.exception_id                     AS exception_id,
+        se.exception_name                   AS exception_type,
+        se.severity                         AS severity_level,
+        se.timestamp_utc                    AS timestamp
+    FROM orders o
+    LEFT JOIN order_items oi
+        ON o.order_id = oi.order_id
+    LEFT JOIN delivery_orders do
+        ON o.order_id = do.order_id
+    LEFT JOIN stock_levels sl
+        ON oi.product_id = sl.product_id
+    LEFT JOIN products p
+        ON oi.product_id = p.product_id
+    LEFT JOIN price_list pl
+        ON pl.sku_id = p.sku AND pl.status = 'ACTIVE'
+    LEFT JOIN demand_forecasts df
+        ON df.product_id = oi.product_id
+    LEFT JOIN subsystem_exceptions se
+        ON se.subsystem_name = 'REPORTING'
+    LEFT JOIN commission_sales cs
+        ON cs.sale_id = o.order_id;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

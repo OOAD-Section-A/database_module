@@ -17,8 +17,9 @@ public final class LogisticsModels {
                                     BigDecimal calculatedCost, LocalDateTime createdAt) {
     }
 
-    public record LogisticsRoute(String routeId, String shipmentId, LocalDateTime currentEta,
-                                 String timelineStage, String routeStatus, boolean requiresRerouting) {
+    public record LogisticsRoute(String routeId, String shipmentId, String gpsCoordinates,
+                                 LocalDateTime currentEta, String timelineStage, String routeStatus,
+                                 boolean requiresRerouting) {
     }
 
     public record ShipmentAlert(String alertId, String shipmentId, String alertMessage,

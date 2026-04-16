@@ -3,6 +3,7 @@ package com.jackfruit.scm.database.facade.subsystem;
 import com.jackfruit.scm.database.model.ReportingModels.ExceptionReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.InventoryStockReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.PriceDiscountReportRow;
+import com.jackfruit.scm.database.model.ReportingModels.DashboardReportRow;
 import com.jackfruit.scm.database.service.JdbcOperations;
 import java.util.List;
 
@@ -48,5 +49,50 @@ public class ReportingSubsystemFacade {
                         resultSet.getTimestamp("timestamp").toLocalDateTime(),
                         resultSet.getString("requested_by"),
                         resultSet.getString("justification_text")));
+    }
+
+    public List<DashboardReportRow> getDashboardReport() {
+        return jdbcOperations.query(
+                "SELECT * FROM vw_reporting_dashboard",
+                resultSet -> new DashboardReportRow(
+                        resultSet.getString("order_id"),
+                        resultSet.getTimestamp("order_date") == null ? null : resultSet.getTimestamp("order_date").toLocalDateTime(),
+                        resultSet.getTimestamp("delivery_date") == null ? null : resultSet.getTimestamp("delivery_date").toLocalDateTime(),
+                        resultSet.getString("order_status"),
+                        (Double) resultSet.getObject("fulfillment_time"),
+                        (Integer) resultSet.getObject("order_quantity"),
+                        resultSet.getString("product_id"),
+                        resultSet.getString("product_name"),
+                        (Integer) resultSet.getObject("current_stock_level"),
+                        (Integer) resultSet.getObject("reorder_level"),
+                        (Boolean) resultSet.getObject("stock_out_flag"),
+                        (Double) resultSet.getObject("inventory_turnover_rate"),
+                        resultSet.getString("supplier_id"),
+                        resultSet.getString("supplier_name"),
+                        (Double) resultSet.getObject("supplier_performance_score"),
+                        (Double) resultSet.getObject("lead_time"),
+                        (Double) resultSet.getObject("on_time_supply_rate"),
+                        resultSet.getString("shipment_id"),
+                        resultSet.getTimestamp("dispatch_date") == null ? null : resultSet.getTimestamp("dispatch_date").toLocalDateTime(),
+                        resultSet.getString("delivery_status"),
+                        (Double) resultSet.getObject("transit_time"),
+                        (Boolean) resultSet.getObject("delay_flag"),
+                        resultSet.getString("delivery_location"),
+                        resultSet.getString("warehouse_id"),
+                        (Integer) resultSet.getObject("storage_capacity"),
+                        (Double) resultSet.getObject("utilization_rate"),
+                        (Integer) resultSet.getObject("inbound_quantity"),
+                        (Integer) resultSet.getObject("outbound_quantity"),
+                        resultSet.getBigDecimal("product_price"),
+                        resultSet.getBigDecimal("discount_applied"),
+                        (Integer) resultSet.getObject("sales_volume"),
+                        resultSet.getBigDecimal("revenue"),
+                        (Integer) resultSet.getObject("demand_forecast"),
+                        resultSet.getString("forecast_period"),
+                        (Integer) resultSet.getObject("predicted_inventory_needs"),
+                        resultSet.getString("exception_id"),
+                        resultSet.getString("exception_type"),
+                        resultSet.getString("severity_level"),
+                        resultSet.getTimestamp("timestamp") == null ? null : resultSet.getTimestamp("timestamp").toLocalDateTime()));
     }
 }

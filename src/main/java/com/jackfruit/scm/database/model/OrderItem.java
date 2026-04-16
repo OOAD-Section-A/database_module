@@ -1,4 +1,4 @@
-package com.jackfruit.scm.database.model;
+/*  */package com.jackfruit.scm.database.model;
 
 import java.math.BigDecimal;
 

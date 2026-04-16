@@ -40,6 +40,9 @@ public class ForecastService {
         ValidationUtils.requireText(forecast.getForecastPeriod(), "forecastPeriod");
         ValidationUtils.requireNonNegative(forecast.getPredictedDemand(), "predictedDemand");
         ValidationUtils.requireRange(forecast.getConfidenceScore(), BigDecimal.ZERO, new BigDecimal("100"), "confidenceScore");
+        if (forecast.getSuggestedOrderQty() != null) {
+            ValidationUtils.requireNonNegative(forecast.getSuggestedOrderQty(), "suggestedOrderQty");
+        }
         if (forecast.getGeneratedAt() == null) {
             throw new IllegalArgumentException("generatedAt cannot be null");
         }

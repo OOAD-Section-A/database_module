@@ -16,8 +16,8 @@ public class ShipmentDaoImpl extends AbstractJdbcDao implements ShipmentDao {
                 """
                 INSERT INTO delivery_orders
                 (delivery_id, order_id, customer_id, delivery_address, delivery_status, delivery_type,
-                 delivery_cost, assigned_agent, warehouse_id, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 delivery_date, delivery_cost, assigned_agent, warehouse_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 statement -> bindShipment(statement, shipment));
     }
@@ -27,15 +27,19 @@ public class ShipmentDaoImpl extends AbstractJdbcDao implements ShipmentDao {
         executeUpdate(
                 """
                 UPDATE delivery_orders
-                SET delivery_status = ?, assigned_agent = ?, updated_at = ?, delivery_cost = ?
+                SET delivery_status = ?, delivery_address = ?, delivery_date = ?, delivery_type = ?,
+                    assigned_agent = ?, updated_at = ?, delivery_cost = ?
                 WHERE delivery_id = ?
                 """,
                 statement -> {
                     statement.setString(1, shipment.getDeliveryStatus());
-                    statement.setString(2, shipment.getAssignedAgent());
-                    statement.setTimestamp(3, Timestamp.valueOf(shipment.getUpdatedAt()));
-                    statement.setBigDecimal(4, shipment.getDeliveryCost());
-                    statement.setString(5, shipment.getDeliveryId());
+                    statement.setString(2, shipment.getDeliveryAddress());
+                    statement.setTimestamp(3, shipment.getDeliveryDate() == null ? null : Timestamp.valueOf(shipment.getDeliveryDate()));
+                    statement.setString(4, shipment.getDeliveryType());
+                    statement.setString(5, shipment.getAssignedAgent());
+                    statement.setTimestamp(6, Timestamp.valueOf(shipment.getUpdatedAt()));
+                    statement.setBigDecimal(7, shipment.getDeliveryCost());
+                    statement.setString(8, shipment.getDeliveryId());
                 });
     }
 
@@ -49,6 +53,7 @@ public class ShipmentDaoImpl extends AbstractJdbcDao implements ShipmentDao {
                         resultSet.getString("customer_id"),
                         resultSet.getString("delivery_address"),
                         resultSet.getString("delivery_status"),
+                        resultSet.getTimestamp("delivery_date") == null ? null : resultSet.getTimestamp("delivery_date").toLocalDateTime(),
                         resultSet.getString("delivery_type"),
                         resultSet.getBigDecimal("delivery_cost"),
                         resultSet.getString("assigned_agent"),
@@ -68,6 +73,7 @@ public class ShipmentDaoImpl extends AbstractJdbcDao implements ShipmentDao {
                         resultSet.getString("customer_id"),
                         resultSet.getString("delivery_address"),
                         resultSet.getString("delivery_status"),
+                        resultSet.getTimestamp("delivery_date") == null ? null : resultSet.getTimestamp("delivery_date").toLocalDateTime(),
                         resultSet.getString("delivery_type"),
                         resultSet.getBigDecimal("delivery_cost"),
                         resultSet.getString("assigned_agent"),
@@ -83,10 +89,11 @@ public class ShipmentDaoImpl extends AbstractJdbcDao implements ShipmentDao {
         statement.setString(4, shipment.getDeliveryAddress());
         statement.setString(5, shipment.getDeliveryStatus());
         statement.setString(6, shipment.getDeliveryType());
-        statement.setBigDecimal(7, shipment.getDeliveryCost());
-        statement.setString(8, shipment.getAssignedAgent());
-        statement.setString(9, shipment.getWarehouseId());
-        statement.setTimestamp(10, Timestamp.valueOf(shipment.getCreatedAt()));
-        statement.setTimestamp(11, shipment.getUpdatedAt() == null ? null : Timestamp.valueOf(shipment.getUpdatedAt()));
+        statement.setTimestamp(7, shipment.getDeliveryDate() == null ? null : Timestamp.valueOf(shipment.getDeliveryDate()));
+        statement.setBigDecimal(8, shipment.getDeliveryCost());
+        statement.setString(9, shipment.getAssignedAgent());
+        statement.setString(10, shipment.getWarehouseId());
+        statement.setTimestamp(11, Timestamp.valueOf(shipment.getCreatedAt()));
+        statement.setTimestamp(12, shipment.getUpdatedAt() == null ? null : Timestamp.valueOf(shipment.getUpdatedAt()));
     }
 }

@@ -1,8 +1,11 @@
 package com.jackfruit.scm.database.config;
 
+import com.mysql.cj.jdbc.AbandonedConnectionCleanupThread;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -49,5 +52,17 @@ public final class DatabaseConnectionManager {
             }
         } catch (SQLException ignored) {
         }
+    }
+
+    public synchronized void shutdown() {
+        List<Connection> connections = new ArrayList<>();
+        pool.drainTo(connections);
+        for (Connection connection : connections) {
+            try {
+                connection.close();
+            } catch (SQLException ignored) {
+            }
+        }
+        AbandonedConnectionCleanupThread.checkedShutdown();
     }
 }
