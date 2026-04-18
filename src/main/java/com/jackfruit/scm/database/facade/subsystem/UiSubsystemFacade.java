@@ -1,5 +1,7 @@
 package com.jackfruit.scm.database.facade.subsystem;
 
+import com.jackfruit.scm.database.dao.ForecastTimeseriesDao;
+import com.jackfruit.scm.database.model.ForecastTimeseries;
 import com.jackfruit.scm.database.model.UiModels.UiAuditLog;
 import com.jackfruit.scm.database.model.UiModels.UiNotification;
 import com.jackfruit.scm.database.model.UiModels.UiPanelState;
@@ -12,9 +14,11 @@ import java.util.List;
 public class UiSubsystemFacade {
 
     private final JdbcOperations jdbcOperations;
+    private final ForecastTimeseriesDao forecastTimeseriesDao;
 
-    public UiSubsystemFacade(JdbcOperations jdbcOperations) {
+    public UiSubsystemFacade(JdbcOperations jdbcOperations, ForecastTimeseriesDao forecastTimeseriesDao) {
         this.jdbcOperations = jdbcOperations;
+        this.forecastTimeseriesDao = forecastTimeseriesDao;
     }
 
     public void createUser(UiUser user) {
@@ -141,5 +145,17 @@ public class UiSubsystemFacade {
                     statement.setString(6, panelState.sidebarMenuItems());
                     statement.setString(7, panelState.activeUserRole());
                 });
+    }
+
+    public List<ForecastTimeseries> listForecastTimeseriesForForecast(String forecastId) {
+        return forecastTimeseriesDao.findByForecastId(forecastId);
+    }
+
+    public ForecastTimeseries getForecastTimeseries(String timeseriesId) {
+        return forecastTimeseriesDao.findById(timeseriesId).orElse(null);
+    }
+
+    public List<ForecastTimeseries> listAllForecastTimeseries() {
+        return forecastTimeseriesDao.findAll();
     }
 }

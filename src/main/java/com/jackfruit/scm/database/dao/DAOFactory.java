@@ -3,6 +3,7 @@ package com.jackfruit.scm.database.dao;
 import com.jackfruit.scm.database.dao.impl.BarcodeEventDaoImpl;
 import com.jackfruit.scm.database.dao.impl.DemandForecastDaoImpl;
 import com.jackfruit.scm.database.dao.impl.ExceptionLogDaoImpl;
+import com.jackfruit.scm.database.dao.impl.ForecastTimeseriesDaoImpl;
 import com.jackfruit.scm.database.dao.impl.OrderDaoImpl;
 import com.jackfruit.scm.database.dao.impl.OrderItemDaoImpl;
 import com.jackfruit.scm.database.dao.impl.PriceListDaoImpl;
@@ -41,5 +42,9 @@ public class DAOFactory {
 
     public ExceptionLogDao createExceptionLogDao() {
         return new ExceptionLogDaoImpl();
+    }
+
+    public ForecastTimeseriesDao createForecastTimeseriesDao() {
+        return new ForecastTimeseriesDaoImpl();
     }
 }
