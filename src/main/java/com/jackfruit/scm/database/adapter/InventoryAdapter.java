@@ -34,6 +34,10 @@ public class InventoryAdapter {
         facade.inventory().createStockLevel(stockLevel);
     }
 
+    public void updateStockLevel(StockLevel stockLevel) {
+        facade.inventory().updateStockLevel(stockLevel);
+    }
+
     public List<Product> listProducts() {
         return facade.inventory().listProducts();
     }

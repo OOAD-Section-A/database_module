@@ -125,6 +125,31 @@ public class InventorySubsystemFacade {
                 });
     }
 
+    public void updateStockLevel(StockLevel stockLevel) {
+        jdbcOperations.update(
+                """
+                UPDATE stock_levels
+                SET product_id = ?, current_stock_qty = ?, reserved_stock_qty = ?, available_stock_qty = ?,
+                    reorder_threshold = ?, reorder_quantity = ?, safety_stock_level = ?, zone_assignment = ?,
+                    stock_health_status = ?, snapshot_timestamp = ?, last_updated = ?
+                WHERE stock_level_id = ?
+                """,
+                statement -> {
+                    statement.setString(1, stockLevel.productId());
+                    statement.setInt(2, stockLevel.currentStockQty());
+                    statement.setInt(3, stockLevel.reservedStockQty());
+                    statement.setInt(4, stockLevel.availableStockQty());
+                    statement.setInt(5, stockLevel.reorderThreshold());
+                    statement.setInt(6, stockLevel.reorderQuantity());
+                    statement.setInt(7, stockLevel.safetyStockLevel());
+                    statement.setString(8, stockLevel.zoneAssignment());
+                    statement.setString(9, stockLevel.stockHealthStatus());
+                    statement.setTimestamp(10, stockLevel.snapshotTimestamp() == null ? null : Timestamp.valueOf(stockLevel.snapshotTimestamp()));
+                    statement.setTimestamp(11, Timestamp.valueOf(stockLevel.lastUpdated()));
+                    statement.setString(12, stockLevel.stockLevelId());
+                });
+    }
+
     public List<StockLevel> listStockLevels() {
         return jdbcOperations.query(
                 "SELECT * FROM stock_levels",
