@@ -77,11 +77,11 @@ INSERT INTO forecast_performance_metrics (
 ON DUPLICATE KEY UPDATE actual_qty = VALUES(actual_qty), mape = VALUES(mape), rmse = VALUES(rmse);
 
 INSERT INTO barcode_rfid_events (
-    event_id, product_id, event_type, source_device, warehouse_id, event_timestamp, raw_payload
+    event_id, product_id, warehouse_id, event_timestamp, description, status, source
 ) VALUES (
-    'BAR-001', 'PROD-APPLE-001', 'SCAN_IN', 'RFID_GATE_A1', 'WH-001', NOW(), '{"tag":"RFID-7788"}'
+    'BAR-001', 'PROD-APPLE-001', 'WH-001', NOW(), '{"tag":"RFID-7788"}', 'SCAN_IN', 'RFID_GATE_A1'
 )
-ON DUPLICATE KEY UPDATE raw_payload = VALUES(raw_payload), event_timestamp = VALUES(event_timestamp);
+ON DUPLICATE KEY UPDATE description = VALUES(description), event_timestamp = VALUES(event_timestamp);
 
 INSERT INTO packaging_jobs (
     package_id, order_id, quantity, total_amount, discounts, packaging_status, packed_by, created_at
@@ -167,9 +167,9 @@ INSERT INTO delivery_tracking_events (
 )
 ON DUPLICATE KEY UPDATE timeline_stage = VALUES(timeline_stage), gps_coordinates = VALUES(gps_coordinates);
 
-INSERT INTO subsystem_exceptions (
-    exception_id, subsystem_name, reference_id, severity, exception_message, status, created_at, resolved_at
+INSERT INTO SCM_EXCEPTION_LOG (
+    exception_id, exception_name, severity, subsystem, error_message, logged_at
 ) VALUES (
-    'EX-001', 'DeliveryTracking', 'SHIP-001', 'HIGH', 'Shipment delayed due to route reassignment', 'OPEN', NOW(), NULL
+    1001, 'ShipmentDelay', 'HIGH', 'DeliveryTracking', 'Shipment delayed due to route reassignment', NOW(3)
 )
-ON DUPLICATE KEY UPDATE status = VALUES(status), exception_message = VALUES(exception_message);
+ON DUPLICATE KEY UPDATE error_message = VALUES(error_message), logged_at = VALUES(logged_at);

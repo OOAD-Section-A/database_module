@@ -677,7 +677,7 @@ CREATE OR REPLACE VIEW vw_exception_report AS
 
 -- vw_reporting_dashboard is created later in the file after all
 -- dependent tables have been defined (orders, products, delivery_orders,
--- demand_forecasts, subsystem_exceptions, commission_sales, etc.).
+-- demand_forecasts, SCM_EXCEPTION_LOG, commission_sales, etc.).
 
 
 -- ============================================================
@@ -1644,24 +1644,29 @@ CREATE TABLE IF NOT EXISTS barcode_rfid_events (
     PRIMARY KEY (event_id)
 );
 
-CREATE TABLE IF NOT EXISTS subsystem_exceptions (
-    exception_id VARCHAR(50) NOT NULL,
-    exception_name VARCHAR(150) NULL,
-    subsystem_name VARCHAR(100) NOT NULL,
-    severity VARCHAR(20) NOT NULL,
-    timestamp_utc DATETIME NOT NULL,
-    duration_ms BIGINT NULL,
-    exception_message VARCHAR(500) NOT NULL,
-    error_code BIGINT NULL,
-    stack_trace TEXT NULL,
-    inner_exception TEXT NULL,
-    user_account VARCHAR(150) NULL,
-    handling_plan TEXT NULL,
-    retry_count TINYINT UNSIGNED NULL,
-    status VARCHAR(30) NOT NULL,
-    resolved_at DATETIME NULL,
-    PRIMARY KEY (exception_id)
-);
+CREATE TABLE IF NOT EXISTS SCM_EXCEPTION_LOG (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    exception_id INT NOT NULL,
+    exception_name VARCHAR(100) NOT NULL,
+    severity VARCHAR(10) NOT NULL,
+    subsystem VARCHAR(100) NOT NULL,
+    error_message TEXT NOT NULL,
+    logged_at DATETIME(3) NOT NULL
+) COMMENT 'Canonical exception log used by ExceptionLogDaoImpl';
+
+CREATE TABLE IF NOT EXISTS forecast_timeseries (
+    id VARCHAR(50) PRIMARY KEY,
+    forecast_id VARCHAR(50) NOT NULL,
+    time_index INT NOT NULL,
+    forecast_value DECIMAL(10,2) NOT NULL,
+    lower_bound DECIMAL(10,2),
+    upper_bound DECIMAL(10,2),
+
+    CONSTRAINT fk_forecast_timeseries_forecast
+        FOREIGN KEY (forecast_id)
+        REFERENCES demand_forecasts(forecast_id)
+        ON DELETE CASCADE
+) COMMENT 'Forecast series values shared between forecasting and UI subsystems';
 
 CREATE OR REPLACE VIEW vw_reporting_dashboard AS
     SELECT
@@ -1706,10 +1711,10 @@ CREATE OR REPLACE VIEW vw_reporting_dashboard AS
         df.predicted_demand                 AS demand_forecast,
         df.forecast_period                  AS forecast_period,
         df.suggested_order_qty              AS predicted_inventory_needs,
-        se.exception_id                     AS exception_id,
+        CAST(se.exception_id AS CHAR)       AS exception_id,
         se.exception_name                   AS exception_type,
         se.severity                         AS severity_level,
-        se.timestamp_utc                    AS timestamp
+        se.logged_at                        AS timestamp
     FROM orders o
     LEFT JOIN order_items oi
         ON o.order_id = oi.order_id
@@ -1723,8 +1728,8 @@ CREATE OR REPLACE VIEW vw_reporting_dashboard AS
         ON pl.sku_id = p.sku AND pl.status = 'ACTIVE'
     LEFT JOIN demand_forecasts df
         ON df.product_id = oi.product_id
-    LEFT JOIN subsystem_exceptions se
-        ON se.subsystem_name = 'REPORTING'
+    LEFT JOIN SCM_EXCEPTION_LOG se
+        ON se.subsystem = 'REPORTING'
     LEFT JOIN commission_sales cs
         ON cs.sale_id = o.order_id;
 
