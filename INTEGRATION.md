@@ -56,19 +56,33 @@ If another subsystem is a Maven project, add this dependency to its `pom.xml`:
 This is the recommended method because Maven also brings required dependencies
 like MySQL Connector/J.
 
+**Important**: The database module also integrates with the exception handler subsystem.
+If you want automatic exception handling and notifications, you must also add:
+
+```xml
+<dependency>
+    <groupId>com.scm</groupId>
+    <artifactId>scm-exception-handler</artifactId>
+    <version>3.0</version>
+</dependency>
+```
+
+See [EXCEPTION_HANDLING_IMPLEMENTATION.md](EXCEPTION_HANDLING_IMPLEMENTATION.md) for details.
+
 ## Manual JAR Integration
 
 If the subsystem is not using Maven:
 
 1. Add `dist/database-module-1.0.0-SNAPSHOT-standalone.jar` to the subsystem classpath.
-2. Make sure `database.properties` is available on the runtime classpath.
-3. Import and call the required adapter class.
+2. Add `dist/scm-exception-handler-v3.jar` to the subsystem classpath (for automatic exception handling).
+3. Make sure `database.properties` is available on the runtime classpath.
+4. Import and call the required adapter class.
 
 Example compile/run commands:
 
 ```bash
-javac -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar" MySubsystem.java
-java -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;." MySubsystem
+javac -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;lib/scm-exception-handler-v3.jar" MySubsystem.java
+java -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;lib/scm-exception-handler-v3.jar;." MySubsystem
 ```
 
 On Windows, use `;` in the classpath. On Linux/macOS, use `:`.
@@ -125,3 +139,16 @@ try (SupplyChainDatabaseFacade db = new SupplyChainDatabaseFacade()) {
 The JAR does not automatically connect subsystems by itself. It provides shared
 Java classes. The actual integration happens when each subsystem imports the JAR
 and calls the adapter or facade methods.
+
+## Exception Handling
+
+The database module integrates with the exception handler subsystem to provide automatic
+error handling, logging, and notifications. When database operations encounter errors,
+the database module automatically delegates to the exception handler.
+
+**To enable exception handling**:
+- Include both `database-module-1.0.0-SNAPSHOT-standalone.jar` AND `scm-exception-handler-v3.jar` in your classpath
+- No code changes needed - exceptions are handled automatically
+
+For detailed information on exception handling architecture and all 32 supported exception
+types, see [EXCEPTION_HANDLING_IMPLEMENTATION.md](EXCEPTION_HANDLING_IMPLEMENTATION.md).

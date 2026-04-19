@@ -30,6 +30,15 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Exception Handler JAR - PROVIDED scope (not bundled, must be supplied by subsystems) -->
+        <dependency>
+            <groupId>com.scm</groupId>
+            <artifactId>scm-exception-handler</artifactId>
+            <version>3.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/dist/scm-exception-handler-v3.jar</systemPath>
+        </dependency>
     </dependencies>
 
     <build>
@@ -79,6 +88,13 @@
                         <configuration>
                             <outputFile>${project.basedir}/dist/${project.artifactId}-${project.version}-standalone.jar</outputFile>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- Exclude exception handler JAR - it should be supplied by subsystems -->
+                            <artifactSet>
+                                <excludes>
+                                    <exclude>com.scm:scm-exception-handler</exclude>
+                                    <exclude>com.scm:scm-exception-viewer-gui</exclude>
+                                </excludes>
+                            </artifactSet>
                         </configuration>
                     </execution>
                 </executions>
