@@ -1,11 +1,13 @@
 package com.jackfruit.scm.database.adapter;
 
 import com.jackfruit.scm.database.facade.SupplyChainDatabaseFacade;
+import com.jackfruit.scm.database.model.ForecastTimeseries;
 import com.jackfruit.scm.database.model.UiModels.UiAuditLog;
 import com.jackfruit.scm.database.model.UiModels.UiNotification;
 import com.jackfruit.scm.database.model.UiModels.UiPanelState;
 import com.jackfruit.scm.database.model.UiModels.UiSession;
 import com.jackfruit.scm.database.model.UiModels.UiUser;
+import java.util.List;
 
 public class UiAdapter {
 
@@ -33,5 +35,17 @@ public class UiAdapter {
 
     public void createPanelState(UiPanelState panelState) {
         facade.ui().createPanelState(panelState);
+    }
+
+    public List<ForecastTimeseries> listForecastTimeseriesForForecast(String forecastId) {
+        return facade.ui().listForecastTimeseriesForForecast(forecastId);
+    }
+
+    public ForecastTimeseries getForecastTimeseries(String timeseriesId) {
+        return facade.ui().getForecastTimeseries(timeseriesId);
+    }
+
+    public List<ForecastTimeseries> listAllForecastTimeseries() {
+        return facade.ui().listAllForecastTimeseries();
     }
 }

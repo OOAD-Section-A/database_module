@@ -22,6 +22,9 @@ public final class ReportingModels {
                                      String justificationText) {
     }
 
+    public record CustomerTierCacheRow(String customerId, String tier, LocalDateTime evaluatedAt) {
+    }
+
     public record DashboardReportRow(String orderId, LocalDateTime orderDate, LocalDateTime deliveryDate,
                                      String orderStatus, Double fulfillmentTime, Integer orderQuantity,
                                      String productId, String productName, Integer currentStockLevel,

@@ -1,5 +1,6 @@
 package com.jackfruit.scm.database.facade.subsystem;
 
+import com.jackfruit.scm.database.model.ReportingModels.CustomerTierCacheRow;
 import com.jackfruit.scm.database.model.ReportingModels.ExceptionReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.InventoryStockReportRow;
 import com.jackfruit.scm.database.model.ReportingModels.PriceDiscountReportRow;
@@ -49,6 +50,15 @@ public class ReportingSubsystemFacade {
                         resultSet.getTimestamp("timestamp").toLocalDateTime(),
                         resultSet.getString("requested_by"),
                         resultSet.getString("justification_text")));
+    }
+
+    public List<CustomerTierCacheRow> getCustomerTierCacheReport() {
+        return jdbcOperations.query(
+                "SELECT * FROM customer_tier_cache",
+                resultSet -> new CustomerTierCacheRow(
+                        resultSet.getString("customer_id"),
+                        resultSet.getString("tier"),
+                        resultSet.getTimestamp("evaluated_at").toLocalDateTime()));
     }
 
     public List<DashboardReportRow> getDashboardReport() {

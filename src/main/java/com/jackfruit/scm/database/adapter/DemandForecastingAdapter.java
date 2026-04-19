@@ -9,6 +9,8 @@ import com.jackfruit.scm.database.model.DemandForecastingModels.ProductLifecycle
 import com.jackfruit.scm.database.model.DemandForecastingModels.ProductMetadata;
 import com.jackfruit.scm.database.model.DemandForecastingModels.PromotionalCalendar;
 import com.jackfruit.scm.database.model.DemandForecastingModels.SalesRecord;
+import com.jackfruit.scm.database.model.ForecastTimeseries;
+import java.util.List;
 
 public class DemandForecastingAdapter {
 
@@ -48,5 +50,13 @@ public class DemandForecastingAdapter {
 
     public void createForecastPerformanceMetric(ForecastPerformanceMetric metric) {
         facade.demandForecasting().createForecastPerformanceMetric(metric);
+    }
+
+    public void createForecastTimeseries(ForecastTimeseries timeseries) {
+        facade.demandForecasting().createForecastTimeseries(timeseries);
+    }
+
+    public void createBatchForecastTimeseries(List<ForecastTimeseries> timeseriesList) {
+        facade.demandForecasting().createBatchForecastTimeseries(timeseriesList);
     }
 }
