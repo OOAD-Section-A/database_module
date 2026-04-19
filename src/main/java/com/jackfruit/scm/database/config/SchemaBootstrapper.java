@@ -1,8 +1,9 @@
 package com.jackfruit.scm.database.config;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -24,7 +25,7 @@ public final class SchemaBootstrapper {
             if (hasTable(connection, CORE_TABLE)) {
                 return;
             }
-            applySchema(connection, Path.of("schema.sql"));
+            applySchema(connection);
         } catch (SQLException | IOException exception) {
             throw new IllegalStateException("Unable to initialize schema from schema.sql", exception);
         } finally {
@@ -39,19 +40,30 @@ public final class SchemaBootstrapper {
         }
     }
 
-    private static void applySchema(Connection connection, Path schemaPath) throws IOException, SQLException {
+    private static void applySchema(Connection connection) throws IOException, SQLException {
         StringBuilder statementBuffer = new StringBuilder();
-        for (String line : Files.readAllLines(schemaPath)) {
-            String trimmed = line.trim();
-            if (trimmed.isEmpty() || trimmed.startsWith("--")) {
-                continue;
-            }
-            statementBuffer.append(line).append(System.lineSeparator());
-            if (trimmed.endsWith(";")) {
-                executeStatement(connection, statementBuffer.toString());
-                statementBuffer.setLength(0);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(openSchemaStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty() || trimmed.startsWith("--")) {
+                    continue;
+                }
+                statementBuffer.append(line).append(System.lineSeparator());
+                if (trimmed.endsWith(";")) {
+                    executeStatement(connection, statementBuffer.toString());
+                    statementBuffer.setLength(0);
+                }
             }
         }
+    }
+
+    private static InputStream openSchemaStream() throws IOException {
+        InputStream inputStream = SchemaBootstrapper.class.getClassLoader().getResourceAsStream("schema.sql");
+        if (inputStream == null) {
+            throw new IOException("schema.sql is missing from the classpath");
+        }
+        return inputStream;
     }
 
     private static void executeStatement(Connection connection, String rawStatement) throws SQLException {

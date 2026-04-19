@@ -88,7 +88,7 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         this.pricingSubsystemFacade = new PricingSubsystemFacade(pricingService, jdbcOperations);
         this.warehouseSubsystemFacade = new WarehouseSubsystemFacade(warehouseService, jdbcOperations);
         this.reportingSubsystemFacade = new ReportingSubsystemFacade(jdbcOperations);
-        this.uiSubsystemFacade = new UiSubsystemFacade(jdbcOperations);
+        this.uiSubsystemFacade = new UiSubsystemFacade(jdbcOperations, daoFactory.createForecastTimeseriesDao());
         this.stockLedgerSubsystemFacade = new StockLedgerSubsystemFacade(jdbcOperations);
         this.inventorySubsystemFacade = new InventorySubsystemFacade(jdbcOperations);
         this.orderFulfillmentSubsystemFacade = new OrderFulfillmentSubsystemFacade(jdbcOperations);
@@ -96,7 +96,7 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         this.ordersSubsystemFacade = new OrdersSubsystemFacade(orderService);
         this.deliveryOrdersSubsystemFacade = new DeliveryOrdersSubsystemFacade(shipmentService);
         this.deliveryMonitoringSubsystemFacade = new DeliveryMonitoringSubsystemFacade(jdbcOperations);
-        this.demandForecastingSubsystemFacade = new DemandForecastingSubsystemFacade(forecastService, jdbcOperations);
+        this.demandForecastingSubsystemFacade = new DemandForecastingSubsystemFacade(forecastService, jdbcOperations, daoFactory.createForecastTimeseriesDao());
         this.logisticsSubsystemFacade = new LogisticsSubsystemFacade(jdbcOperations);
         this.exceptionHandlingSubsystemFacade = new ExceptionHandlingSubsystemFacade(exceptionService);
         this.packagingSubsystemFacade = new PackagingSubsystemFacade(jdbcOperations);

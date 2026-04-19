@@ -1,5 +1,6 @@
 package com.jackfruit.scm.database.facade.subsystem;
 
+import com.jackfruit.scm.database.dao.ForecastTimeseriesDao;
 import com.jackfruit.scm.database.model.DemandForecast;
 import com.jackfruit.scm.database.model.DemandForecastingModels.ForecastPerformanceMetric;
 import com.jackfruit.scm.database.model.DemandForecastingModels.HolidayCalendar;
@@ -8,6 +9,7 @@ import com.jackfruit.scm.database.model.DemandForecastingModels.ProductLifecycle
 import com.jackfruit.scm.database.model.DemandForecastingModels.ProductMetadata;
 import com.jackfruit.scm.database.model.DemandForecastingModels.PromotionalCalendar;
 import com.jackfruit.scm.database.model.DemandForecastingModels.SalesRecord;
+import com.jackfruit.scm.database.model.ForecastTimeseries;
 import com.jackfruit.scm.database.service.ForecastService;
 import com.jackfruit.scm.database.service.JdbcOperations;
 import java.sql.Date;
@@ -17,10 +19,12 @@ public class DemandForecastingSubsystemFacade {
 
     private final ForecastService forecastService;
     private final JdbcOperations jdbcOperations;
+    private final ForecastTimeseriesDao forecastTimeseriesDao;
 
-    public DemandForecastingSubsystemFacade(ForecastService forecastService, JdbcOperations jdbcOperations) {
+    public DemandForecastingSubsystemFacade(ForecastService forecastService, JdbcOperations jdbcOperations, ForecastTimeseriesDao forecastTimeseriesDao) {
         this.forecastService = forecastService;
         this.jdbcOperations = jdbcOperations;
+        this.forecastTimeseriesDao = forecastTimeseriesDao;
     }
 
     public void createForecast(DemandForecast forecast) {
@@ -173,5 +177,15 @@ public class DemandForecastingSubsystemFacade {
                     statement.setBigDecimal(7, metric.rmse());
                     statement.setString(8, metric.modelUsed());
                 });
+    }
+
+    public void createForecastTimeseries(ForecastTimeseries timeseries) {
+        forecastTimeseriesDao.save(timeseries);
+    }
+
+    public void createBatchForecastTimeseries(List<ForecastTimeseries> timeseriesList) {
+        for (ForecastTimeseries timeseries : timeseriesList) {
+            forecastTimeseriesDao.save(timeseries);
+        }
     }
 }

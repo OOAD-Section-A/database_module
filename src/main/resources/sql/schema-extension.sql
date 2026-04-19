@@ -315,14 +315,26 @@ CREATE TABLE IF NOT EXISTS barcode_rfid_events (
     PRIMARY KEY (event_id)
 );
 
-CREATE TABLE IF NOT EXISTS subsystem_exceptions (
-    exception_id VARCHAR(50) NOT NULL,
-    subsystem_name VARCHAR(100) NOT NULL,
-    reference_id VARCHAR(50) NULL,
-    severity VARCHAR(20) NOT NULL,
-    exception_message VARCHAR(500) NOT NULL,
-    status VARCHAR(30) NOT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolved_at DATETIME NULL,
-    PRIMARY KEY (exception_id)
+CREATE TABLE IF NOT EXISTS SCM_EXCEPTION_LOG (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    exception_id INT NOT NULL,
+    exception_name VARCHAR(100) NOT NULL,
+    severity VARCHAR(10) NOT NULL,
+    subsystem VARCHAR(100) NOT NULL,
+    error_message TEXT NOT NULL,
+    logged_at DATETIME(3) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS forecast_timeseries (
+    id VARCHAR(50) PRIMARY KEY,
+    forecast_id VARCHAR(50) NOT NULL,
+    time_index INT NOT NULL,
+    forecast_value DECIMAL(10,2) NOT NULL,
+    lower_bound DECIMAL(10,2),
+    upper_bound DECIMAL(10,2),
+
+    CONSTRAINT fk_forecast_timeseries_forecast
+        FOREIGN KEY (forecast_id)
+        REFERENCES demand_forecasts(forecast_id)
+        ON DELETE CASCADE
 );
