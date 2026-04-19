@@ -31,11 +31,30 @@ public final class DatabaseConfig {
         }
 
         return new DatabaseConfig(
-                properties.getProperty("db.url", "jdbc:mysql://localhost:3306/OOAD"),
-                properties.getProperty("db.username", "root"),
-                properties.getProperty("db.password", "root"),
-                Integer.parseInt(properties.getProperty("db.pool.size", "5"))
+                resolveSetting("db.url", "DB_URL", properties, "jdbc:mysql://localhost:3306/OOAD"),
+                resolveSetting("db.username", "DB_USERNAME", properties, "root"),
+                resolveSetting("db.password", "DB_PASSWORD", properties, ""),
+                Integer.parseInt(resolveSetting("db.pool.size", "DB_POOL_SIZE", properties, "5"))
         );
+    }
+
+    private static String resolveSetting(String propertyKey, String envKey, Properties properties, String defaultValue) {
+        String systemValue = System.getProperty(propertyKey);
+        if (systemValue != null && !systemValue.isBlank()) {
+            return systemValue;
+        }
+
+        String envValue = System.getenv(envKey);
+        if (envValue != null && !envValue.isBlank()) {
+            return envValue;
+        }
+
+        String propertyValue = properties.getProperty(propertyKey);
+        if (propertyValue != null && !propertyValue.isBlank()) {
+            return propertyValue;
+        }
+
+        return defaultValue;
     }
 
     public String getUrl() {
