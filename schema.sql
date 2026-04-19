@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS promotions (
     min_cart_value      DECIMAL(12,2)  NOT NULL  DEFAULT 0.00,
     max_uses            INT            NOT NULL,
     current_use_count   INT            NOT NULL  DEFAULT 0,
+    expired             BOOLEAN        NOT NULL  DEFAULT FALSE COMMENT 'Compatibility flag for external promotion state',
 
     PRIMARY KEY (promo_id),
     UNIQUE KEY uq_coupon_code (coupon_code),
@@ -191,6 +192,44 @@ CREATE TABLE IF NOT EXISTS promotions (
     CONSTRAINT chk_use_count_not_exceed CHECK (current_use_count <= max_uses),
     CONSTRAINT chk_min_cart_value       CHECK (min_cart_value >= 0)
 ) COMMENT 'Component 5 — Promotion and campaign manager';
+
+
+CREATE TABLE IF NOT EXISTS promotion_eligible_skus (
+    id                  BIGINT         NOT NULL AUTO_INCREMENT,
+    promo_id            VARCHAR(50)    NOT NULL,
+    sku_id              VARCHAR(100)   NOT NULL,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_promotion_eligible_sku (promo_id, sku_id),
+    FOREIGN KEY (promo_id) REFERENCES promotions(promo_id)
+        ON DELETE CASCADE
+) COMMENT 'Normalized promotion-to-SKU mapping for subsystem read access';
+
+
+CREATE TABLE IF NOT EXISTS bundle_promotions (
+    promo_id            VARCHAR(50)    NOT NULL,
+    promo_name          VARCHAR(200)   NOT NULL,
+    discount_pct        DECIMAL(5,4)   NOT NULL,
+    start_date          DATE           NOT NULL,
+    end_date            DATE           NOT NULL,
+    expired             BOOLEAN        NOT NULL DEFAULT FALSE,
+
+    PRIMARY KEY (promo_id),
+    CONSTRAINT chk_bundle_promo_discount_pct CHECK (discount_pct BETWEEN 0 AND 1),
+    CONSTRAINT chk_bundle_promo_date_range CHECK (end_date >= start_date)
+) COMMENT 'Bundle-specific promotions for combined SKU offers';
+
+
+CREATE TABLE IF NOT EXISTS bundle_promotion_skus (
+    id                  BIGINT         NOT NULL AUTO_INCREMENT,
+    promo_id            VARCHAR(50)    NOT NULL,
+    sku_id              VARCHAR(100)   NOT NULL,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_bundle_promo_sku (promo_id, sku_id),
+    FOREIGN KEY (promo_id) REFERENCES bundle_promotions(promo_id)
+        ON DELETE CASCADE
+) COMMENT 'Required SKUs for a bundle promotion';
 
 
 -- -------------------------------------------------------
@@ -205,6 +244,7 @@ CREATE TABLE IF NOT EXISTS discount_policies (
     max_discount_cap_pct    DECIMAL(5,2)   NOT NULL  COMMENT 'Absolute ceiling for combined discounts',
     perishability_days      INT            NOT NULL  COMMENT 'Days-to-expiry that triggers clearance markdown',
     clearance_discount_pct  DECIMAL(5,2)   NOT NULL  COMMENT 'Auto-applied markdown % near expiry',
+    is_active               BOOLEAN        NOT NULL  DEFAULT TRUE COMMENT 'Compatibility flag for external policy state',
 
     PRIMARY KEY (policy_id),
     UNIQUE KEY uq_policy_priority (priority_level),
@@ -213,6 +253,74 @@ CREATE TABLE IF NOT EXISTS discount_policies (
     CONSTRAINT chk_clearance_pct    CHECK (clearance_discount_pct BETWEEN 0 AND 100),
     CONSTRAINT chk_perish_days      CHECK (perishability_days > 0)
 ) COMMENT 'Component 6 — Discount policy and stacking rules';
+
+
+CREATE TABLE IF NOT EXISTS rebate_programs (
+    program_id           VARCHAR(100)   NOT NULL,
+    customer_id          VARCHAR(100)   NOT NULL,
+    sku_id               VARCHAR(100)   NOT NULL,
+    target_spend         DECIMAL(19,4)  NOT NULL,
+    accumulated_spend    DECIMAL(19,4)  NOT NULL DEFAULT 0.0000,
+    rebate_pct           DECIMAL(5,4)   NOT NULL,
+
+    PRIMARY KEY (program_id),
+    UNIQUE KEY uq_rebate_program_customer_sku (customer_id, sku_id),
+    CONSTRAINT chk_rebate_target_spend CHECK (target_spend >= 0),
+    CONSTRAINT chk_rebate_accumulated_spend CHECK (accumulated_spend >= 0),
+    CONSTRAINT chk_rebate_pct_range CHECK (rebate_pct BETWEEN 0 AND 1)
+) COMMENT 'Tracks rebate program participation by customer and SKU';
+
+
+CREATE TABLE IF NOT EXISTS volume_discount_schedules (
+    schedule_id          VARCHAR(50)    NOT NULL,
+    sku_id               VARCHAR(100)   NOT NULL,
+
+    PRIMARY KEY (schedule_id),
+    UNIQUE KEY uq_volume_schedule_sku (sku_id)
+) COMMENT 'Volume discount schedule master per SKU';
+
+
+CREATE TABLE IF NOT EXISTS volume_tier_rules (
+    id                   BIGINT         NOT NULL AUTO_INCREMENT,
+    schedule_id          VARCHAR(50)    NOT NULL,
+    min_qty              INT            NOT NULL,
+    max_qty              INT            NOT NULL,
+    discount_pct         DECIMAL(5,4)   NOT NULL,
+
+    PRIMARY KEY (id),
+    FOREIGN KEY (schedule_id) REFERENCES volume_discount_schedules(schedule_id)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_volume_tier_min_qty CHECK (min_qty > 0),
+    CONSTRAINT chk_volume_tier_max_qty CHECK (max_qty >= min_qty),
+    CONSTRAINT chk_volume_tier_discount_pct CHECK (discount_pct BETWEEN 0 AND 1)
+) COMMENT 'Tier rules within a volume discount schedule';
+
+
+CREATE TABLE IF NOT EXISTS customer_tier_cache (
+    customer_id          VARCHAR(100)   NOT NULL,
+    tier                 VARCHAR(20)    NOT NULL,
+    evaluated_at         TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (customer_id)
+) COMMENT 'Cached customer pricing tiers for downstream reads';
+
+
+CREATE TABLE IF NOT EXISTS customer_tier_overrides (
+    customer_id          VARCHAR(100)   NOT NULL,
+    override_tier        VARCHAR(20)    NOT NULL,
+    override_set_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (customer_id)
+) COMMENT 'Manual pricing tier overrides by customer';
+
+
+CREATE TABLE IF NOT EXISTS regional_pricing_multipliers (
+    region_code          VARCHAR(20)    NOT NULL,
+    multiplier           DECIMAL(6,4)   NOT NULL,
+
+    PRIMARY KEY (region_code),
+    CONSTRAINT chk_regional_multiplier_positive CHECK (multiplier > 0)
+) COMMENT 'Region-specific pricing multipliers';
 
 
 -- -------------------------------------------------------
@@ -237,6 +345,32 @@ CREATE TABLE IF NOT EXISTS contract_pricing (
 ) COMMENT 'Component 7 — B2B contract pricing per customer per SKU';
 
 
+CREATE TABLE IF NOT EXISTS contracts (
+    contract_id          VARCHAR(50)    NOT NULL,
+    customer_id          VARCHAR(100)   NOT NULL,
+    status               VARCHAR(20)    NOT NULL,
+    start_date           DATE           NOT NULL,
+    end_date             DATE           NOT NULL,
+
+    PRIMARY KEY (contract_id),
+    CONSTRAINT chk_contracts_date_range CHECK (end_date >= start_date)
+) COMMENT 'Contract header for negotiated commercial terms';
+
+
+CREATE TABLE IF NOT EXISTS contract_sku_prices (
+    id                   BIGINT         NOT NULL AUTO_INCREMENT,
+    contract_id          VARCHAR(50)    NOT NULL,
+    sku_id               VARCHAR(100)   NOT NULL,
+    negotiated_price     DECIMAL(19,4)  NOT NULL,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_contract_sku_price (contract_id, sku_id),
+    FOREIGN KEY (contract_id) REFERENCES contracts(contract_id)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_contract_sku_negotiated_price CHECK (negotiated_price >= 0)
+) COMMENT 'Per-SKU negotiated prices within a contract';
+
+
 -- -------------------------------------------------------
 -- Component 8 — Price Approval & Workflow Engine
 -- Audit trail for all manual price override requests.
@@ -257,6 +391,56 @@ CREATE TABLE IF NOT EXISTS price_approvals (
 
     CONSTRAINT chk_approval_discount_pos CHECK (requested_discount_amt > 0)
 ) COMMENT 'Component 8 — Price approval workflow and audit trail';
+
+
+CREATE TABLE IF NOT EXISTS approval_requests (
+    approval_id          VARCHAR(36)    NOT NULL,
+    request_type         VARCHAR(50)    NOT NULL,
+    order_id             VARCHAR(100)   NOT NULL,
+    requested_discount_amt DECIMAL(19,4) NOT NULL,
+    status               VARCHAR(20)    NOT NULL,
+    submission_time      TIMESTAMP      NOT NULL,
+    escalation_time      TIMESTAMP      NULL,
+    approval_timestamp   TIMESTAMP      NULL,
+    routed_to_approver_id VARCHAR(100)  NULL,
+    approving_manager_id VARCHAR(100)   NULL,
+    rejection_reason     TEXT           NULL,
+    audit_log_flag       BOOLEAN        NOT NULL DEFAULT FALSE,
+
+    PRIMARY KEY (approval_id),
+    CONSTRAINT chk_approval_requests_discount CHECK (requested_discount_amt >= 0)
+) COMMENT 'Approval workflow requests for external pricing subsystem compatibility';
+
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id                   BIGINT         NOT NULL AUTO_INCREMENT,
+    approval_id          VARCHAR(36)    NOT NULL,
+    timestamp            TIMESTAMP      NOT NULL,
+    event_type           VARCHAR(50)    NOT NULL,
+    actor                VARCHAR(100)   NOT NULL,
+    detail               TEXT           NULL,
+
+    PRIMARY KEY (id),
+    KEY idx_audit_log_approval_id (approval_id),
+    FOREIGN KEY (approval_id) REFERENCES approval_requests(approval_id)
+        ON DELETE CASCADE
+) COMMENT 'Audit trail entries for approval requests';
+
+
+CREATE TABLE IF NOT EXISTS profitability_analytics (
+    id                   BIGINT         NOT NULL AUTO_INCREMENT,
+    approval_id          VARCHAR(36)    NOT NULL,
+    request_type         VARCHAR(50)    NOT NULL,
+    discount_amount      DECIMAL(19,4)  NOT NULL,
+    final_status         VARCHAR(20)    NOT NULL,
+    recorded_at          TIMESTAMP      NOT NULL,
+
+    PRIMARY KEY (id),
+    KEY idx_profitability_approval_id (approval_id),
+    FOREIGN KEY (approval_id) REFERENCES approval_requests(approval_id)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_profitability_discount_amount CHECK (discount_amount >= 0)
+) COMMENT 'Approval profitability analytics snapshots';
 
 
 -- ============================================================
@@ -1545,4 +1729,3 @@ CREATE OR REPLACE VIEW vw_reporting_dashboard AS
         ON cs.sale_id = o.order_id;
 
 SET FOREIGN_KEY_CHECKS = 1;
-

@@ -34,13 +34,15 @@ public class ExceptionService {
     }
 
     private void validate(SubsystemException subsystemException) {
-        ValidationUtils.requireText(subsystemException.getExceptionId(), "exceptionId");
-        ValidationUtils.requireText(subsystemException.getSubsystemName(), "subsystemName");
+        if (subsystemException.getExceptionId() == null) {
+            throw new IllegalArgumentException("exceptionId cannot be null");
+        }
+        ValidationUtils.requireText(subsystemException.getExceptionName(), "exceptionName");
+        ValidationUtils.requireText(subsystemException.getSubsystem(), "subsystem");
         ValidationUtils.requireText(subsystemException.getSeverity(), "severity");
-        ValidationUtils.requireText(subsystemException.getExceptionMessage(), "exceptionMessage");
-        ValidationUtils.requireText(subsystemException.getStatus(), "status");
-        if (subsystemException.getTimestampUtc() == null) {
-            throw new IllegalArgumentException("timestampUtc cannot be null");
+        ValidationUtils.requireText(subsystemException.getErrorMessage(), "errorMessage");
+        if (subsystemException.getLoggedAt() == null) {
+            throw new IllegalArgumentException("loggedAt cannot be null");
         }
     }
 }
