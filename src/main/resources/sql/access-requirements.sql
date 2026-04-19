@@ -8,6 +8,7 @@
 CREATE ROLE IF NOT EXISTS `pricing_discount_rw`;
 CREATE ROLE IF NOT EXISTS `packing_repairs_receipt_ro`;
 CREATE ROLE IF NOT EXISTS `reporting_dashboard_ro`;
+CREATE ROLE IF NOT EXISTS `warehouse_management_rw`;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`promotion_eligible_skus` TO `pricing_discount_rw`;
 GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`bundle_promotions` TO `pricing_discount_rw`;
@@ -31,3 +32,9 @@ GRANT SELECT ON `OOAD`.`promotions` TO `packing_repairs_receipt_ro`;
 GRANT SELECT ON `OOAD`.`promotion_eligible_skus` TO `packing_repairs_receipt_ro`;
 
 GRANT SELECT ON `OOAD`.`customer_tier_cache` TO `reporting_dashboard_ro`;
+
+-- WMS execution tables are owned by Warehouse Management.
+-- No DELETE grant is issued because the PDF calls out soft-state operational records.
+GRANT SELECT, INSERT, UPDATE ON `OOAD`.`wms_storage_units_lpn` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE ON `OOAD`.`wms_pick_waves` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE ON `OOAD`.`wms_task_queue` TO `warehouse_management_rw`;

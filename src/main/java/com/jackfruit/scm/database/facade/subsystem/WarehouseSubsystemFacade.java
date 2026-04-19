@@ -10,6 +10,9 @@ import com.jackfruit.scm.database.model.WarehouseModels.StockRecord;
 import com.jackfruit.scm.database.model.WarehouseModels.StockMovement;
 import com.jackfruit.scm.database.model.WarehouseModels.WarehouseReturn;
 import com.jackfruit.scm.database.model.WarehouseModels.WarehouseZone;
+import com.jackfruit.scm.database.model.WarehouseModels.WmsPickWave;
+import com.jackfruit.scm.database.model.WarehouseModels.WmsStorageUnitLpn;
+import com.jackfruit.scm.database.model.WarehouseModels.WmsTaskQueueItem;
 import com.jackfruit.scm.database.service.JdbcOperations;
 import com.jackfruit.scm.database.service.WarehouseService;
 import java.sql.Timestamp;
@@ -182,5 +185,163 @@ public class WarehouseSubsystemFacade {
                     statement.setInt(8, cycleCount.countedQty());
                     statement.setTimestamp(9, Timestamp.valueOf(cycleCount.countTimestamp()));
                 });
+    }
+
+    public void createStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
+        jdbcOperations.update(
+                """
+                INSERT INTO wms_storage_units_lpn
+                (lpn_id, unit_type, current_location_type, current_bin_id, gross_weight_kg, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, storageUnit.lpnId());
+                    statement.setString(2, storageUnit.unitType());
+                    statement.setString(3, storageUnit.currentLocationType());
+                    statement.setString(4, storageUnit.currentBinId());
+                    statement.setBigDecimal(5, storageUnit.grossWeightKg());
+                    statement.setString(6, storageUnit.status());
+                    statement.setTimestamp(7, Timestamp.valueOf(storageUnit.createdAt()));
+                });
+    }
+
+    public void updateStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
+        jdbcOperations.update(
+                """
+                UPDATE wms_storage_units_lpn
+                SET unit_type = ?, current_location_type = ?, current_bin_id = ?, gross_weight_kg = ?, status = ?
+                WHERE lpn_id = ?
+                """,
+                statement -> {
+                    statement.setString(1, storageUnit.unitType());
+                    statement.setString(2, storageUnit.currentLocationType());
+                    statement.setString(3, storageUnit.currentBinId());
+                    statement.setBigDecimal(4, storageUnit.grossWeightKg());
+                    statement.setString(5, storageUnit.status());
+                    statement.setString(6, storageUnit.lpnId());
+                });
+    }
+
+    public List<WmsStorageUnitLpn> listStorageUnitLpns() {
+        return jdbcOperations.query(
+                "SELECT lpn_id, unit_type, current_location_type, current_bin_id, gross_weight_kg, status, created_at FROM wms_storage_units_lpn",
+                resultSet -> new WmsStorageUnitLpn(
+                        resultSet.getString("lpn_id"),
+                        resultSet.getString("unit_type"),
+                        resultSet.getString("current_location_type"),
+                        resultSet.getString("current_bin_id"),
+                        resultSet.getBigDecimal("gross_weight_kg"),
+                        resultSet.getString("status"),
+                        resultSet.getTimestamp("created_at").toLocalDateTime()));
+    }
+
+    public void createPickWave(WmsPickWave pickWave) {
+        jdbcOperations.update(
+                """
+                INSERT INTO wms_pick_waves
+                (wave_id, warehouse_id, wave_type, status, created_at, released_at, version)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, pickWave.waveId());
+                    statement.setString(2, pickWave.warehouseId());
+                    statement.setString(3, pickWave.waveType());
+                    statement.setString(4, pickWave.status());
+                    statement.setTimestamp(5, Timestamp.valueOf(pickWave.createdAt()));
+                    statement.setTimestamp(6, pickWave.releasedAt() == null ? null : Timestamp.valueOf(pickWave.releasedAt()));
+                    statement.setInt(7, pickWave.version());
+                });
+    }
+
+    public void updatePickWave(WmsPickWave pickWave) {
+        jdbcOperations.update(
+                """
+                UPDATE wms_pick_waves
+                SET warehouse_id = ?, wave_type = ?, status = ?, released_at = ?, version = version + 1
+                WHERE wave_id = ? AND version = ?
+                """,
+                statement -> {
+                    statement.setString(1, pickWave.warehouseId());
+                    statement.setString(2, pickWave.waveType());
+                    statement.setString(3, pickWave.status());
+                    statement.setTimestamp(4, pickWave.releasedAt() == null ? null : Timestamp.valueOf(pickWave.releasedAt()));
+                    statement.setString(5, pickWave.waveId());
+                    statement.setInt(6, pickWave.version());
+                });
+    }
+
+    public List<WmsPickWave> listPickWaves() {
+        return jdbcOperations.query(
+                "SELECT wave_id, warehouse_id, wave_type, status, created_at, released_at, version FROM wms_pick_waves",
+                resultSet -> new WmsPickWave(
+                        resultSet.getString("wave_id"),
+                        resultSet.getString("warehouse_id"),
+                        resultSet.getString("wave_type"),
+                        resultSet.getString("status"),
+                        resultSet.getTimestamp("created_at").toLocalDateTime(),
+                        resultSet.getTimestamp("released_at") == null ? null : resultSet.getTimestamp("released_at").toLocalDateTime(),
+                        resultSet.getInt("version")));
+    }
+
+    public void createTaskQueueItem(WmsTaskQueueItem taskQueueItem) {
+        jdbcOperations.update(
+                """
+                INSERT INTO wms_task_queue
+                (task_id, task_type, product_id, source_lpn_id, target_bin_id, assigned_employee_id, priority, status, created_at, version)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                statement -> {
+                    statement.setString(1, taskQueueItem.taskId());
+                    statement.setString(2, taskQueueItem.taskType());
+                    statement.setString(3, taskQueueItem.productId());
+                    statement.setString(4, taskQueueItem.sourceLpnId());
+                    statement.setString(5, taskQueueItem.targetBinId());
+                    statement.setString(6, taskQueueItem.assignedEmployeeId());
+                    statement.setInt(7, taskQueueItem.priority());
+                    statement.setString(8, taskQueueItem.status());
+                    statement.setTimestamp(9, Timestamp.valueOf(taskQueueItem.createdAt()));
+                    statement.setInt(10, taskQueueItem.version());
+                });
+    }
+
+    public void updateTaskQueueItem(WmsTaskQueueItem taskQueueItem) {
+        jdbcOperations.update(
+                """
+                UPDATE wms_task_queue
+                SET task_type = ?, product_id = ?, source_lpn_id = ?, target_bin_id = ?,
+                    assigned_employee_id = ?, priority = ?, status = ?, version = version + 1
+                WHERE task_id = ? AND version = ?
+                """,
+                statement -> {
+                    statement.setString(1, taskQueueItem.taskType());
+                    statement.setString(2, taskQueueItem.productId());
+                    statement.setString(3, taskQueueItem.sourceLpnId());
+                    statement.setString(4, taskQueueItem.targetBinId());
+                    statement.setString(5, taskQueueItem.assignedEmployeeId());
+                    statement.setInt(6, taskQueueItem.priority());
+                    statement.setString(7, taskQueueItem.status());
+                    statement.setString(8, taskQueueItem.taskId());
+                    statement.setInt(9, taskQueueItem.version());
+                });
+    }
+
+    public List<WmsTaskQueueItem> listTaskQueueItems() {
+        return jdbcOperations.query(
+                """
+                SELECT task_id, task_type, product_id, source_lpn_id, target_bin_id,
+                       assigned_employee_id, priority, status, created_at, version
+                FROM wms_task_queue
+                """,
+                resultSet -> new WmsTaskQueueItem(
+                        resultSet.getString("task_id"),
+                        resultSet.getString("task_type"),
+                        resultSet.getString("product_id"),
+                        resultSet.getString("source_lpn_id"),
+                        resultSet.getString("target_bin_id"),
+                        resultSet.getString("assigned_employee_id"),
+                        resultSet.getInt("priority"),
+                        resultSet.getString("status"),
+                        resultSet.getTimestamp("created_at").toLocalDateTime(),
+                        resultSet.getInt("version")));
     }
 }

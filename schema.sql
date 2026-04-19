@@ -470,6 +470,7 @@ CREATE TABLE IF NOT EXISTS warehouse_zones (
     zone_id         VARCHAR(50)  NOT NULL,
     warehouse_id    VARCHAR(50)  NOT NULL,
     zone_type       ENUM('STORAGE','PICKING','STAGING','RECEIVING','DISPATCH') NOT NULL,
+    temperature_class ENUM('AMBIENT','COLD','FROZEN','HAZMAT') NOT NULL DEFAULT 'AMBIENT',
 
     PRIMARY KEY (zone_id),
     FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
@@ -485,8 +486,11 @@ CREATE TABLE IF NOT EXISTS bins (
     zone_id         VARCHAR(50)  NOT NULL,
     bin_capacity    INT          NOT NULL  COMMENT 'Maximum unit capacity of this bin',
     bin_status      ENUM('AVAILABLE','OCCUPIED','RESERVED','DAMAGED') NOT NULL DEFAULT 'AVAILABLE',
+    max_weight_kg   DECIMAL(10,2) NULL COMMENT 'Prevents overloading during putaway',
+    barcode         VARCHAR(100) NULL COMMENT 'Scanned by WMS workers for verification',
 
     PRIMARY KEY (bin_id),
+    UNIQUE KEY uq_bins_barcode (barcode),
     FOREIGN KEY (zone_id) REFERENCES warehouse_zones(zone_id)
         ON DELETE CASCADE,
 
@@ -506,6 +510,8 @@ CREATE TABLE IF NOT EXISTS goods_receipts (
     received_qty        INT          NOT NULL,
     received_at         DATETIME     NOT NULL  DEFAULT CURRENT_TIMESTAMP,
     condition_status    ENUM('GOOD','DAMAGED','PARTIAL','REJECTED') NOT NULL DEFAULT 'GOOD',
+    asn_id              VARCHAR(50)  NULL COMMENT 'FK to proc_asn (Pre-receiving linkage)',
+    qc_status           ENUM('PENDING','PASSED','FAILED','BYPASSED') NOT NULL DEFAULT 'PENDING',
 
     PRIMARY KEY (goods_receipt_id),
 
@@ -522,6 +528,8 @@ CREATE TABLE IF NOT EXISTS stock_records (
     product_id      VARCHAR(50)  NOT NULL  COMMENT 'Ref to Inventory subsystem',
     bin_id          VARCHAR(50)  NOT NULL,
     quantity        INT          NOT NULL  DEFAULT 0,
+    batch_id        VARCHAR(50)  NULL COMMENT 'FK to inventory_batches (FEFO support)',
+    lpn_id          VARCHAR(50)  NULL COMMENT 'FK to wms_storage_units_lpn (Pallet/Tote tracking)',
     last_updated    DATETIME     NOT NULL  DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (stock_id),
@@ -565,11 +573,94 @@ CREATE TABLE IF NOT EXISTS pick_tasks (
     product_id          VARCHAR(50)  NOT NULL,
     pick_qty            INT          NOT NULL,
     task_status         ENUM('PENDING','IN_PROGRESS','COMPLETED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+    wave_id             VARCHAR(50)  NULL COMMENT 'FK to wms_pick_waves (Task grouping)',
+    bin_id              VARCHAR(50)  NULL COMMENT 'FK to bins (Exact location routing)',
+    target_lpn_id       VARCHAR(50)  NULL COMMENT 'The physical tote the item is picked into',
+    updated_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (pick_task_id),
 
     CONSTRAINT chk_pick_qty CHECK (pick_qty > 0)
 ) COMMENT 'Pick tasks assigned to warehouse employees for order fulfillment';
+
+
+-- -------------------------------------------------------
+-- WMS License Plate Numbers (LPN)
+-- Tracks moving physical containers independently of bins.
+-- -------------------------------------------------------
+CREATE TABLE IF NOT EXISTS wms_storage_units_lpn (
+    lpn_id                  VARCHAR(50) NOT NULL,
+    unit_type               ENUM('PALLET','TOTE','CASE') NOT NULL,
+    current_location_type   ENUM('BIN','DOCK','TRANSIT','PACKING_STATION') NOT NULL,
+    current_bin_id          VARCHAR(50) NULL COMMENT 'FK to bins',
+    gross_weight_kg         DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    status                  ENUM('ACTIVE','CLOSED','DAMAGED') NOT NULL DEFAULT 'ACTIVE',
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (lpn_id),
+    FOREIGN KEY (current_bin_id) REFERENCES bins(bin_id)
+        ON DELETE SET NULL,
+    CONSTRAINT chk_lpn_weight CHECK (gross_weight_kg >= 0)
+) COMMENT 'Physical pallet/tote/case tracking for WMS execution';
+
+
+-- -------------------------------------------------------
+-- WMS Pick Waves
+-- Groups pick tasks for warehouse execution.
+-- -------------------------------------------------------
+CREATE TABLE IF NOT EXISTS wms_pick_waves (
+    wave_id                 VARCHAR(50) NOT NULL,
+    warehouse_id            VARCHAR(50) NOT NULL,
+    wave_type               ENUM('SINGLE_ORDER','BATCH','ZONE') NOT NULL DEFAULT 'BATCH',
+    status                  ENUM('PLANNED','RELEASED','COMPLETED','CANCELLED') NOT NULL DEFAULT 'PLANNED',
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    released_at             TIMESTAMP NULL,
+    version                 INT DEFAULT 0 COMMENT 'Optimistic locking for concurrency',
+
+    PRIMARY KEY (wave_id),
+    FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
+) COMMENT 'Task grouping for WMS pick execution';
+
+
+-- -------------------------------------------------------
+-- WMS Internal Task Queue
+-- Handles putaway, replenishment, and slotting moves.
+-- -------------------------------------------------------
+CREATE TABLE IF NOT EXISTS wms_task_queue (
+    task_id                 VARCHAR(50) NOT NULL,
+    task_type               ENUM('PUTAWAY','REPLENISHMENT','CROSS_DOCK','BIN_CONSOLIDATION','CYCLE_COUNT') NOT NULL,
+    product_id              VARCHAR(50) NOT NULL,
+    source_lpn_id           VARCHAR(50) NULL,
+    target_bin_id           VARCHAR(50) NULL,
+    assigned_employee_id    VARCHAR(50) NULL,
+    priority                INT NOT NULL DEFAULT 10 COMMENT 'Lower number = higher priority',
+    status                  ENUM('PENDING','ACTIVE','COMPLETED','FAILED') NOT NULL DEFAULT 'PENDING',
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    version                 INT DEFAULT 0 COMMENT 'Optimistic locking for concurrency',
+
+    PRIMARY KEY (task_id),
+    FOREIGN KEY (source_lpn_id) REFERENCES wms_storage_units_lpn(lpn_id)
+        ON DELETE SET NULL,
+    FOREIGN KEY (target_bin_id) REFERENCES bins(bin_id)
+        ON DELETE SET NULL
+) COMMENT 'Execution queue for internal warehouse operations';
+
+
+ALTER TABLE stock_records
+    ADD CONSTRAINT fk_stock_records_lpn
+        FOREIGN KEY (lpn_id) REFERENCES wms_storage_units_lpn(lpn_id)
+        ON DELETE SET NULL;
+
+ALTER TABLE pick_tasks
+    ADD CONSTRAINT fk_pick_tasks_wave
+        FOREIGN KEY (wave_id) REFERENCES wms_pick_waves(wave_id)
+        ON DELETE SET NULL,
+    ADD CONSTRAINT fk_pick_tasks_bin
+        FOREIGN KEY (bin_id) REFERENCES bins(bin_id)
+        ON DELETE SET NULL,
+    ADD CONSTRAINT fk_pick_tasks_target_lpn
+        FOREIGN KEY (target_lpn_id) REFERENCES wms_storage_units_lpn(lpn_id)
+        ON DELETE SET NULL;
 
 
 -- -------------------------------------------------------
@@ -919,6 +1010,160 @@ CREATE TABLE IF NOT EXISTS products (
     PRIMARY KEY (product_id),
     UNIQUE KEY uq_sku (sku)
 ) COMMENT 'Central product catalog shared across subsystems';
+
+
+-- ============================================================
+-- SUBSYSTEM â€” PROCUREMENT & VENDOR MANAGEMENT
+-- Namespaced proc_ tables mirror procurement data without
+-- trampling inventory, warehouse, or reporting tables.
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS proc_suppliers (
+    supplier_id         VARCHAR(50)   NOT NULL,
+    name                VARCHAR(150)  NOT NULL,
+    avg_lead_time       INT           NOT NULL DEFAULT 0 COMMENT 'Days',
+    reliability_score   DECIMAL(5,2)  NOT NULL DEFAULT 0.00,
+    status              VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
+
+    PRIMARY KEY (supplier_id)
+) COMMENT 'Procurement supplier master data';
+
+
+CREATE TABLE IF NOT EXISTS proc_product_supplier (
+    id                  BIGINT        NOT NULL AUTO_INCREMENT,
+    product_id          VARCHAR(50)   NOT NULL,
+    supplier_id         VARCHAR(50)   NOT NULL,
+    price               DECIMAL(12,2) NOT NULL,
+    min_order_qty       INT           NOT NULL DEFAULT 1,
+    last_updated        TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_prod_sup (product_id, supplier_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (supplier_id) REFERENCES proc_suppliers(supplier_id)
+        ON DELETE CASCADE
+) COMMENT 'Supplier/product purchasing terms';
+
+
+CREATE TABLE IF NOT EXISTS proc_purchase_orders (
+    po_id               VARCHAR(50)  NOT NULL,
+    supplier_id         VARCHAR(50)  NOT NULL,
+    warehouse_id        VARCHAR(50)  NOT NULL,
+    order_date          DATE         NOT NULL,
+    expected_delivery   DATE         NOT NULL,
+    priority            VARCHAR(20)  NOT NULL DEFAULT 'NORMAL',
+    status              VARCHAR(20)  NOT NULL DEFAULT 'CREATED',
+    version             INT          DEFAULT 0 COMMENT 'Optimistic locking',
+
+    PRIMARY KEY (po_id),
+    FOREIGN KEY (supplier_id) REFERENCES proc_suppliers(supplier_id),
+    FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)
+) COMMENT 'Inbound procurement purchase orders';
+
+
+CREATE TABLE IF NOT EXISTS proc_po_items (
+    id                  BIGINT        NOT NULL AUTO_INCREMENT,
+    po_id               VARCHAR(50)   NOT NULL,
+    product_id          VARCHAR(50)   NOT NULL,
+    ordered_qty         INT           NOT NULL,
+    received_qty        INT           NOT NULL DEFAULT 0,
+    pending_qty         INT GENERATED ALWAYS AS (ordered_qty - received_qty) STORED,
+    agreed_price        DECIMAL(12,2) NOT NULL,
+
+    PRIMARY KEY (id),
+    FOREIGN KEY (po_id) REFERENCES proc_purchase_orders(po_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT chk_proc_po_item_qty CHECK (ordered_qty > 0),
+    CONSTRAINT chk_proc_po_item_received CHECK (received_qty >= 0 AND received_qty <= ordered_qty)
+) COMMENT 'Line items for procurement purchase orders';
+
+
+CREATE TABLE IF NOT EXISTS proc_asn (
+    asn_id              VARCHAR(50) NOT NULL,
+    po_id               VARCHAR(50) NOT NULL,
+    supplier_id         VARCHAR(50) NOT NULL,
+    expected_arrival    DATE        NOT NULL,
+
+    PRIMARY KEY (asn_id),
+    FOREIGN KEY (po_id) REFERENCES proc_purchase_orders(po_id),
+    FOREIGN KEY (supplier_id) REFERENCES proc_suppliers(supplier_id)
+) COMMENT 'Advance shipment notices for inbound receiving';
+
+
+ALTER TABLE goods_receipts
+    ADD CONSTRAINT fk_goods_receipts_asn
+        FOREIGN KEY (asn_id) REFERENCES proc_asn(asn_id)
+        ON DELETE SET NULL;
+
+
+CREATE TABLE IF NOT EXISTS proc_quality_inspections (
+    inspection_id       VARCHAR(50)  NOT NULL,
+    grn_id              VARCHAR(50)  NOT NULL COMMENT 'FK to legacy goods_receipts.goods_receipt_id',
+    product_id          VARCHAR(50)  NOT NULL,
+    passed_qty          INT          NOT NULL,
+    failed_qty          INT          NOT NULL,
+    remarks             VARCHAR(255) NULL,
+
+    PRIMARY KEY (inspection_id),
+    FOREIGN KEY (grn_id) REFERENCES goods_receipts(goods_receipt_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT chk_proc_qc_qty CHECK (passed_qty >= 0 AND failed_qty >= 0)
+) COMMENT 'Quality checks performed during procurement receipt';
+
+
+CREATE TABLE IF NOT EXISTS proc_supplier_invoices (
+    invoice_id          VARCHAR(50)   NOT NULL,
+    po_id               VARCHAR(50)   NOT NULL,
+    total_amount        DECIMAL(14,2) NOT NULL,
+    invoice_date        DATE          NOT NULL,
+
+    PRIMARY KEY (invoice_id),
+    FOREIGN KEY (po_id) REFERENCES proc_purchase_orders(po_id)
+) COMMENT 'Supplier invoice headers for 3-way matching';
+
+
+CREATE TABLE IF NOT EXISTS proc_invoice_items (
+    id                  BIGINT        NOT NULL AUTO_INCREMENT,
+    invoice_id          VARCHAR(50)   NOT NULL,
+    product_id          VARCHAR(50)   NOT NULL,
+    billed_qty          INT           NOT NULL,
+    billed_price        DECIMAL(12,2) NOT NULL,
+
+    PRIMARY KEY (id),
+    FOREIGN KEY (invoice_id) REFERENCES proc_supplier_invoices(invoice_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT chk_proc_invoice_item_qty CHECK (billed_qty > 0),
+    CONSTRAINT chk_proc_invoice_item_price CHECK (billed_price >= 0)
+) COMMENT 'Supplier invoice line items';
+
+
+CREATE TABLE IF NOT EXISTS proc_supplier_payments (
+    payment_id          VARCHAR(50)   NOT NULL,
+    invoice_id          VARCHAR(50)   NOT NULL,
+    amount_paid         DECIMAL(14,2) NOT NULL,
+    status              VARCHAR(20)   NOT NULL DEFAULT 'PENDING',
+
+    PRIMARY KEY (payment_id),
+    FOREIGN KEY (invoice_id) REFERENCES proc_supplier_invoices(invoice_id)
+) COMMENT 'Payments made against supplier invoices';
+
+
+CREATE TABLE IF NOT EXISTS proc_discrepancies (
+    id                  BIGINT       NOT NULL AUTO_INCREMENT,
+    type                VARCHAR(20)  NOT NULL COMMENT 'QUANTITY, PRICE, DAMAGE',
+    product_id          VARCHAR(50)  NOT NULL,
+    supplier_id         VARCHAR(50)  NOT NULL,
+    description         TEXT         NULL,
+    created_at          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (supplier_id) REFERENCES proc_suppliers(supplier_id)
+) COMMENT 'Procurement 3-way-match discrepancy records';
 
 
 -- -------------------------------------------------------

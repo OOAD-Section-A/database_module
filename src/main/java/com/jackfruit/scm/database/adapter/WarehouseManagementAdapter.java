@@ -11,6 +11,10 @@ import com.jackfruit.scm.database.model.WarehouseModels.StockRecord;
 import com.jackfruit.scm.database.model.WarehouseModels.StockMovement;
 import com.jackfruit.scm.database.model.WarehouseModels.WarehouseReturn;
 import com.jackfruit.scm.database.model.WarehouseModels.WarehouseZone;
+import com.jackfruit.scm.database.model.WarehouseModels.WmsPickWave;
+import com.jackfruit.scm.database.model.WarehouseModels.WmsStorageUnitLpn;
+import com.jackfruit.scm.database.model.WarehouseModels.WmsTaskQueueItem;
+import java.util.List;
 
 public class WarehouseManagementAdapter {
 
@@ -58,5 +62,41 @@ public class WarehouseManagementAdapter {
 
     public void createCycleCount(CycleCount cycleCount) {
         facade.warehouse().createCycleCount(cycleCount);
+    }
+
+    public void createStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
+        facade.warehouse().createStorageUnitLpn(storageUnit);
+    }
+
+    public void updateStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
+        facade.warehouse().updateStorageUnitLpn(storageUnit);
+    }
+
+    public List<WmsStorageUnitLpn> listStorageUnitLpns() {
+        return facade.warehouse().listStorageUnitLpns();
+    }
+
+    public void createPickWave(WmsPickWave pickWave) {
+        facade.warehouse().createPickWave(pickWave);
+    }
+
+    public void updatePickWave(WmsPickWave pickWave) {
+        facade.warehouse().updatePickWave(pickWave);
+    }
+
+    public List<WmsPickWave> listPickWaves() {
+        return facade.warehouse().listPickWaves();
+    }
+
+    public void createTaskQueueItem(WmsTaskQueueItem taskQueueItem) {
+        facade.warehouse().createTaskQueueItem(taskQueueItem);
+    }
+
+    public void updateTaskQueueItem(WmsTaskQueueItem taskQueueItem) {
+        facade.warehouse().updateTaskQueueItem(taskQueueItem);
+    }
+
+    public List<WmsTaskQueueItem> listTaskQueueItems() {
+        return facade.warehouse().listTaskQueueItems();
     }
 }
