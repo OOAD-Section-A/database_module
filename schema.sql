@@ -30,6 +30,26 @@
 SET FOREIGN_KEY_CHECKS = 0;
 SET NAMES utf8mb4;
 
+CREATE DATABASE OOAD;
+
+USE OOAD;
+
+-- EXCEPTION SUBSYSTEM TABLE FOR LOGGING
+
+CREATE TABLE IF NOT EXISTS SCM_EXCEPTION_LOG (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    exception_id INT NOT NULL,
+    exception_name VARCHAR(100) NOT NULL,
+    severity VARCHAR(10) NOT NULL,
+    subsystem VARCHAR(100) NOT NULL,
+    error_message TEXT NOT NULL,
+    logged_at DATETIME(3) NOT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_scm_exception_log_subsystem_logged_at (subsystem, logged_at),
+    INDEX idx_scm_exception_log_exception_id (exception_id)
+);
+
+
 -- ============================================================
 -- SUBSYSTEM 1 — MULTI-LEVEL PRICING & DISCOUNT MANAGEMENT
 -- ============================================================
@@ -39,9 +59,6 @@ SET NAMES utf8mb4;
 -- Stores the active/historical price for every SKU,
 -- broken down by region, channel and buyer type.
 -- -------------------------------------------------------
-CREATE DATABASE OOAD;
-
-USE OOAD;
 CREATE TABLE IF NOT EXISTS price_list (
     price_id        VARCHAR(50)    NOT NULL,
     sku_id          VARCHAR(50)    NOT NULL  COMMENT 'FK-style ref to Inventory SKU; owned externally',
