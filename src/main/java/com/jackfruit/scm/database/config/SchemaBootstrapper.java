@@ -5,14 +5,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Locale;
 
 public final class SchemaBootstrapper {
-
-    private static final String CORE_TABLE = "orders";
 
     private SchemaBootstrapper() {
     }
@@ -22,10 +18,7 @@ public final class SchemaBootstrapper {
         Connection connection = null;
         try {
             connection = connectionManager.getConnection();
-            if (hasTable(connection, CORE_TABLE)) {
-                return;
-            }
-            applySchema(connection);
+            dropAndRecreateSchema(connection);
         } catch (SQLException | IOException exception) {
             throw new IllegalStateException("Unable to initialize schema from schema.sql", exception);
         } finally {
@@ -33,11 +26,11 @@ public final class SchemaBootstrapper {
         }
     }
 
-    private static boolean hasTable(Connection connection, String tableName) throws SQLException {
-        DatabaseMetaData metaData = connection.getMetaData();
-        try (var resultSet = metaData.getTables(connection.getCatalog(), null, tableName, new String[]{"TABLE"})) {
-            return resultSet.next();
+    private static void dropAndRecreateSchema(Connection connection) throws IOException, SQLException {
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("DROP DATABASE IF EXISTS OOAD");
         }
+        applySchema(connection);
     }
 
     private static void applySchema(Connection connection) throws IOException, SQLException {
@@ -72,11 +65,6 @@ public final class SchemaBootstrapper {
             statementText = statementText.substring(0, statementText.length() - 1).trim();
         }
         if (statementText.isEmpty()) {
-            return;
-        }
-
-        String upper = statementText.toUpperCase(Locale.ROOT);
-        if (upper.startsWith("CREATE DATABASE") || upper.startsWith("USE ")) {
             return;
         }
 

@@ -30,10 +30,24 @@ public final class DatabaseConfig {
             throw new IllegalStateException("Unable to load database.properties", exception);
         }
 
+        String url = resolveSetting("db.url", "DB_URL", properties, null);
+        String username = resolveSetting("db.username", "DB_USERNAME", properties, null);
+        String password = resolveSetting("db.password", "DB_PASSWORD", properties, null);
+
+        if (url == null || url.isBlank()) {
+            throw new IllegalStateException("Database URL is required. Provide it via: -Ddb.url=<url>, DB_URL environment variable, or db.url in database.properties");
+        }
+        if (username == null || username.isBlank()) {
+            throw new IllegalStateException("Database username is required. Provide it via: -Ddb.username=<user>, DB_USERNAME environment variable, or db.username in database.properties");
+        }
+        if (password == null) {
+            throw new IllegalStateException("Database password is required. Provide it via: -Ddb.password=<pass>, DB_PASSWORD environment variable, or db.password in database.properties");
+        }
+
         return new DatabaseConfig(
-                resolveSetting("db.url", "DB_URL", properties, "jdbc:mysql://localhost:3306/OOAD"),
-                resolveSetting("db.username", "DB_USERNAME", properties, "root"),
-                resolveSetting("db.password", "DB_PASSWORD", properties, ""),
+                url,
+                username,
+                password,
                 Integer.parseInt(resolveSetting("db.pool.size", "DB_POOL_SIZE", properties, "5"))
         );
     }

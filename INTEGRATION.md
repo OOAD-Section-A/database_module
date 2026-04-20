@@ -42,58 +42,66 @@ To install it into the local Maven repository:
 mvn install
 ```
 
-## Schema Setup
+## Automatic Schema Initialization
 
-The standalone JAR now contains the canonical runtime schema:
+The database schema is automatically initialized every time the module runs. When a subsystem
+instantiates `SupplyChainDatabaseFacade` or calls an adapter:
 
-```text
-schema.sql
-```
+1. The module drops the existing `OOAD` database (if it exists).
+2. The module automatically creates a fresh database with all tables, views, and
+   relationships from the embedded `schema.sql`.
+3. This ensures you always have the latest schema version.
+4. No manual schema setup or SQL script execution is required.
 
-This is the single source of truth for runtime tables and views. On a fresh
-setup, teams should:
+**Important**: The schema is **always recreated**, so any local data in the `OOAD`
+database will be lost on each run. This is by design to ensure schema updates
+are always applied.
 
-1. Create the `OOAD` database in MySQL.
-2. Run the module normally.
+### Database Connection Configuration
 
-On first run, the module bootstraps the schema from the embedded `schema.sql`.
-Teams do not need a separate external copy of `schema.sql` in the working
-directory anymore.
+Subsystems must provide MySQL database connection details via **environment
+variables** or **JVM system properties** (in order of precedence):
 
-## Migration File
+| Property | Environment Variable | Required | Example |
+|----------|----------------------|----------|----------|
+| `db.url` | `DB_URL` | **Yes** | `jdbc:mysql://localhost:3306` |
+| `db.username` | `DB_USERNAME` | **Yes** | `app_user` |
+| `db.password` | `DB_PASSWORD` | **Yes** | `SecurePassword123` |
+| `db.pool.size` | `DB_POOL_SIZE` | No (default: 5) | `10` |
 
-For teams that already created a local `OOAD` database from an older version of
-the project, use the migration file instead of dropping and recreating the
-database:
+### Credentials are Required
 
-```text
-src/main/resources/sql/migration-to-canonical-schema.sql
-```
+**Database URL, username, and password are mandatory.** The module will fail to start with a clear error
+message if any of these are missing. There are no default values for credentials.
 
-Why use it:
+### Configuration Methods (in priority order)
 
-1. It upgrades older local schemas in place.
-2. It preserves existing local data where possible.
-3. It adds newer tables and columns expected by the current JAR.
-4. It aligns older databases with the canonical `schema.sql`.
+1. **JVM System Properties** (highest priority):
+   ```bash
+   java -Ddb.url=jdbc:mysql://db:3306/OOAD \
+        -Ddb.username=user \
+        -Ddb.password=pass \
+        -cp "lib/database-module.jar:." MySubsystem
+   ```
 
-Run it with:
+2. **Environment Variables** (medium priority):
+   ```bash
+   export DB_URL=jdbc:mysql://db:3306/OOAD
+   export DB_USERNAME=user
+   export DB_PASSWORD=pass
+   java -cp "lib/database-module.jar:." MySubsystem
+   ```
 
-```bash
-mysql -u <user> -p OOAD < src/main/resources/sql/migration-to-canonical-schema.sql
-```
+3. **database.properties file** (lowest priority):
+   ```properties
+   db.url=jdbc:mysql://db:3306/OOAD
+   db.username=user
+   db.password=pass
+   db.pool.size=5
+   ```
 
-Use the migration file when:
-
-1. A team already has an `OOAD` database from a previous iteration.
-2. They are missing newer tables such as `forecast_timeseries` or
-   `SCM_EXCEPTION_LOG`.
-3. They want to avoid deleting local test data.
-
-Use a fresh bootstrap instead when:
-
-1. The team is setting up from scratch.
-2. They are fine recreating the database cleanly.
+The module will use whichever method is configured. System properties override
+environment variables, which override the properties file.
 
 ## Maven Integration
 
@@ -110,44 +118,56 @@ If another subsystem is a Maven project, add this dependency to its `pom.xml`:
 This is the recommended method because Maven also brings required dependencies
 like MySQL Connector/J.
 
-**Important**: The database module also integrates with the exception handler subsystem.
-If you want automatic exception handling and notifications, you must also add:
 
-```xml
-<dependency>
-    <groupId>com.scm</groupId>
-    <artifactId>scm-exception-handler</artifactId>
-    <version>3.0</version>
-</dependency>
-```
-
-See [EXCEPTION_HANDLING_IMPLEMENTATION.md](EXCEPTION_HANDLING_IMPLEMENTATION.md) for details.
 
 ## Manual JAR Integration
 
 If the subsystem is not using Maven:
 
 1. Add `dist/database-module-1.0.0-SNAPSHOT-standalone.jar` to the subsystem classpath.
-2. Add `dist/scm-exception-handler-v3.jar` to the subsystem classpath (for automatic exception handling).
-3. Set database connection values with environment variables such as `DB_URL`,
-   `DB_USERNAME`, and `DB_PASSWORD`, or provide matching JVM system properties.
-4. Import and call the required adapter class.
+2. Set database connection values using one of the methods above (environment variables, system properties, or database.properties file).
+3. Import and call the required adapter class for your subsystem's operations.
 
-Example compile/run commands:
+When the subsystem instantiates the database facade or adapter:
+1. The schema will automatically drop any existing `OOAD` database
+2. A fresh schema will be created from the embedded SQL
+3. All tables and views will be ready to use
+
+**Credentials are required.** If you don't provide `db.url`, `db.username`, and `db.password`,
+the module will throw an exception with a clear error message.
+
+**Example - Using Environment Variables:**
 
 ```bash
+# Set environment variables
+export DB_URL=jdbc:mysql://localhost:3306/OOAD
+export DB_USERNAME=root
+export DB_PASSWORD=password
+
+# Compile and run
 javac -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;lib/scm-exception-handler-v3.jar" MySubsystem.java
-java -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;lib/scm-exception-handler-v3.jar;." MySubsystem
+java -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;" MySubsystem.java
+java -cp "lib/database-module-1.0.0-SNAPSHOT-standalone
+
+**Example - Using System Properties:**
+
+```bash
+javac -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar" MySubsystem.java
+java -Ddb.url=jdbc:mysql://localhost:3306/OOAD \
+     -Ddb.username=root \
+     -Ddb.password=password \
+     -cp "lib/database-module-1.0.0-SNAPSHOT-standalone.jar;." MySubsystem
 ```
 
 On Windows, use `;` in the classpath. On Linux/macOS, use `:`.
 
-## Using Adapters
+## Using Adapters (Required)
 
-Yes, other subsystems can integrate through adapters. The JAR makes the adapter
-classes available, and each adapter gives a subsystem-friendly API.
+Subsystems **must** access database operations through adapter classes. Do **not** access
+the database directly. Each adapter provides a subsystem-specific API with only the
+operations needed for that subsystem.
 
-Example:
+**Example:**
 
 ```java
 import com.jackfruit.scm.database.adapter.InventoryAdapter;
@@ -164,46 +184,38 @@ public class InventorySubsystem {
     }
 }
 ```
+### Available Adapters
 
-Other available adapters include:
+Each subsystem has a dedicated adapter class:
 
-- `PricingAdapter`
-- `OrderAdapter`
-- `InventoryAdapter`
-- `WarehouseManagementAdapter`
-- `LogisticsAdapter`
-- `ReportingAdapter`
-- `BarcodeTrackingAdapter`
-- `ExceptionHandlingAdapter`
+- `PricingAdapter` - Pricing and discount operations
+- `OrderAdapter` - Order creation and queries
+- `InventoryAdapter` - Inventory management
+- `WarehouseManagementAdapter` - Warehouse operations
+- `LogisticsAdapter` - Logistics and shipping
+- `ReportingAdapter` - Reporting and analytics
+- `BarcodeTrackingAdapter` - Barcode scanning and tracking
+- `DeliveryOrdersAdapter` - Delivery order management
+- `OrderFulfillmentAdapter` - Order fulfillment
+- `DeliveryMonitoringAdapter` - Delivery monitoring
+- `DemandForecastingAdapter` - Demand forecasting
+- `CommissionAdapter` - Commission tracking
+- `PackagingAdapter` - Packaging operations
+- `ReturnsAdapter` - Returns management
+- `StockLedgerAdapter` - Stock ledger operations
 
-## Direct Facade Usage
+## Important: Adapter-Only Access
 
-Adapters are useful, but not mandatory. A subsystem can also use the facade
-directly:
+**Subsystems must use adapters exclusively.** Do not attempt to:
+- Access the database directly
+- Bypass adapters to write custom SQL
+- Create your own DAOs or database connections
+- Access internal service classes
 
-```java
-try (SupplyChainDatabaseFacade db = new SupplyChainDatabaseFacade()) {
-    db.inventory().listProducts();
-    db.pricing().listPrices();
-    db.orders().listOrders();
-}
-```
+The adapters encapsulate all database logic and ensure consistent data access patterns
+across all subsystems. Using adapters guarantees proper exception handling, data validation,
+and integration with the rest of the system.
 
-## Important Note
-
-The JAR does not automatically connect subsystems by itself. It provides shared
-Java classes. The actual integration happens when each subsystem imports the JAR
-and calls the adapter or facade methods.
-
-## Exception Handling
-
-The database module integrates with the exception handler subsystem to provide automatic
-error handling, logging, and notifications. When database operations encounter errors,
-the database module automatically delegates to the exception handler.
-
-**To enable exception handling**:
-- Include both `database-module-1.0.0-SNAPSHOT-standalone.jar` AND `scm-exception-handler-v3.jar` in your classpath
-- No code changes needed - exceptions are handled automatically
-
-For detailed information on exception handling architecture and all 32 supported exception
+If an adapter doesn't provide the functionality you need, contact the database module
+maintainers to extend it—do not create workaroundsion
 types, see [EXCEPTION_HANDLING_IMPLEMENTATION.md](EXCEPTION_HANDLING_IMPLEMENTATION.md).

@@ -1,6 +1,7 @@
 package com.jackfruit.scm.database.facade;
 
 import com.jackfruit.scm.database.config.DatabaseConnectionManager;
+import com.jackfruit.scm.database.config.SchemaBootstrapper;
 import com.jackfruit.scm.database.dao.DAOFactory;
 import com.jackfruit.scm.database.facade.subsystem.BarcodeSubsystemFacade;
 import com.jackfruit.scm.database.facade.subsystem.CommissionSubsystemFacade;
@@ -70,6 +71,8 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
     private final BarcodeSubsystemFacade barcodeSubsystemFacade;
 
     public SupplyChainDatabaseFacade() {
+        SchemaBootstrapper.ensureSchemaInitialized();
+        
         DAOFactory daoFactory = new DAOFactory();
         StockChangeSubject stockChangeSubject = new StockChangeSubject();
         ShipmentAlertSubject shipmentAlertSubject = new ShipmentAlertSubject();
