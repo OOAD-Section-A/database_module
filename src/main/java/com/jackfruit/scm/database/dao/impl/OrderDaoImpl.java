@@ -45,6 +45,13 @@ public class OrderDaoImpl extends AbstractJdbcDao implements OrderDao {
     }
 
     @Override
+    public void deleteById(String orderId) {
+        executeUpdate(
+                "DELETE FROM orders WHERE order_id = ?",
+                statement -> statement.setString(1, orderId));
+    }
+
+    @Override
     public Optional<Order> findById(String orderId) {
         return queryForObject(
                 "SELECT * FROM orders WHERE order_id = ?",

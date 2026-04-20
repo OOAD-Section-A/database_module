@@ -33,6 +33,11 @@ public class PricingService {
         return priceListDao.findAll();
     }
 
+    public void deletePrice(String priceId) {
+        ValidationUtils.requireText(priceId, "priceId");
+        priceListDao.deleteById(priceId);
+    }
+
     private void validatePriceList(PriceList priceList) {
         ValidationUtils.requireText(priceList.getPriceId(), "priceId");
         ValidationUtils.requireText(priceList.getSkuId(), "skuId");

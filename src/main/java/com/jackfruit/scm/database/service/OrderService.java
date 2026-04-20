@@ -28,6 +28,11 @@ public class OrderService {
         orderDao.update(order);
     }
 
+    public void deleteOrder(String orderId) {
+        ValidationUtils.requireText(orderId, "orderId");
+        orderDao.deleteById(orderId);
+    }
+
     public Optional<Order> getOrder(String orderId) {
         ValidationUtils.requireText(orderId, "orderId");
         return orderDao.findById(orderId);
@@ -45,6 +50,11 @@ public class OrderService {
     public void updateOrderItem(OrderItem item) {
         validateOrderItem(item);
         orderItemDao.update(item);
+    }
+
+    public void deleteOrderItem(String orderItemId) {
+        ValidationUtils.requireText(orderItemId, "orderItemId");
+        orderItemDao.deleteById(orderItemId);
     }
 
     public Optional<OrderItem> getOrderItem(String orderItemId) {

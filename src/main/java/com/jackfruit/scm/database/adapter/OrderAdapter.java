@@ -16,7 +16,15 @@ public class OrderAdapter {
         facade.orders().createOrder(order);
     }
 
+    public void deleteOrder(String orderId) {
+        facade.orders().deleteOrder(orderId);
+    }
+
     public void addOrderItem(OrderItem item) {
         facade.orders().addOrderItem(item);
+    }
+
+    public void deleteOrderItem(String orderItemId) {
+        facade.orders().deleteOrderItem(orderItemId);
     }
 }

@@ -16,6 +16,10 @@ public class BarcodeSubsystemFacade {
         eventIngestionService.ingestEvent(event);
     }
 
+    public void deleteBarcodeEvent(String eventId) {
+        eventIngestionService.deleteEvent(eventId);
+    }
+
     public List<BarcodeRfidEvent> listBarcodeEvents() {
         return eventIngestionService.getEvents();
     }

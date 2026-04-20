@@ -29,6 +29,11 @@ public class EventIngestionService {
         barcodeEventDao.update(event);
     }
 
+    public void deleteEvent(String eventId) {
+        ValidationUtils.requireText(eventId, "eventId");
+        barcodeEventDao.deleteById(eventId);
+    }
+
     public Optional<BarcodeRfidEvent> getEvent(String eventId) {
         ValidationUtils.requireText(eventId, "eventId");
         return barcodeEventDao.findById(eventId);

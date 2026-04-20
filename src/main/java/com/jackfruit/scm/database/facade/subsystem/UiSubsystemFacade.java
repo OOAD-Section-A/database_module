@@ -51,6 +51,16 @@ public class UiSubsystemFacade {
                 });
     }
 
+    public void deleteUser(String username) {
+        jdbcOperations.update(
+                """
+                UPDATE ui_users
+                SET is_account_locked = TRUE, login_attempt_count = 0
+                WHERE username = ?
+                """,
+                statement -> statement.setString(1, username));
+    }
+
     public List<UiUser> listUsers() {
         return jdbcOperations.query(
                 "SELECT * FROM ui_users",
@@ -90,6 +100,12 @@ public class UiSubsystemFacade {
                 });
     }
 
+    public void deleteSession(String jwtSessionToken) {
+        jdbcOperations.update(
+                "UPDATE ui_sessions SET session_status = 'TERMINATED' WHERE jwt_session_token = ?",
+                statement -> statement.setString(1, jwtSessionToken));
+    }
+
     public void createNotification(UiNotification notification) {
         jdbcOperations.update(
                 "INSERT INTO ui_notifications (user_id, notification_type, notification_message, is_read, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -100,6 +116,12 @@ public class UiSubsystemFacade {
                     statement.setBoolean(4, notification.read());
                     statement.setTimestamp(5, Timestamp.valueOf(notification.createdAt()));
                 });
+    }
+
+    public void deleteNotification(int notificationId) {
+        jdbcOperations.update(
+                "DELETE FROM ui_notifications WHERE notification_id = ?",
+                statement -> statement.setInt(1, notificationId));
     }
 
     public List<UiNotification> listNotifications() {
@@ -125,6 +147,12 @@ public class UiSubsystemFacade {
                 });
     }
 
+    public void deleteAuditLog(long auditId) {
+        jdbcOperations.update(
+                "DELETE FROM ui_audit_log WHERE audit_id = ?",
+                statement -> statement.setLong(1, auditId));
+    }
+
     public void createPanelState(UiPanelState panelState) {
         jdbcOperations.update(
                 """
@@ -145,6 +173,12 @@ public class UiSubsystemFacade {
                     statement.setString(6, panelState.sidebarMenuItems());
                     statement.setString(7, panelState.activeUserRole());
                 });
+    }
+
+    public void deletePanelState(String panelId) {
+        jdbcOperations.update(
+                "DELETE FROM ui_panel_state WHERE panel_id = ?",
+                statement -> statement.setString(1, panelId));
     }
 
     public List<ForecastTimeseries> listForecastTimeseriesForForecast(String forecastId) {

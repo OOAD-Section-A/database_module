@@ -31,6 +31,11 @@ public class WarehouseService {
         warehouseDao.update(warehouse);
     }
 
+    public void deleteWarehouse(String warehouseId) {
+        ValidationUtils.requireText(warehouseId, "warehouseId");
+        warehouseDao.deleteById(warehouseId);
+    }
+
     public Optional<Warehouse> getWarehouse(String warehouseId) {
         ValidationUtils.requireText(warehouseId, "warehouseId");
         return warehouseDao.findById(warehouseId);

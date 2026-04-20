@@ -14,4 +14,8 @@ public class BarcodeReaderAdapter {
     public void recordScan(BarcodeRfidEvent event) {
         facade.barcode().recordBarcodeEvent(event);
     }
+
+    public void deleteScan(String eventId) {
+        facade.barcode().deleteBarcodeEvent(eventId);
+    }
 }

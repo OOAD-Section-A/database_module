@@ -1,6 +1,7 @@
 package com.jackfruit.scm.database.facade;
 
 import com.jackfruit.scm.database.config.DatabaseConnectionManager;
+import com.jackfruit.scm.database.config.SchemaBootstrapper;
 import com.jackfruit.scm.database.dao.DAOFactory;
 import com.jackfruit.scm.database.facade.subsystem.BarcodeSubsystemFacade;
 import com.jackfruit.scm.database.facade.subsystem.CommissionSubsystemFacade;
@@ -70,6 +71,14 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
     private final BarcodeSubsystemFacade barcodeSubsystemFacade;
 
     public SupplyChainDatabaseFacade() {
+        this(true);
+    }
+
+    protected SupplyChainDatabaseFacade(boolean initializeSchema) {
+        if (initializeSchema) {
+            SchemaBootstrapper.ensureSchemaInitialized();
+        }
+
         DAOFactory daoFactory = new DAOFactory();
         StockChangeSubject stockChangeSubject = new StockChangeSubject();
         ShipmentAlertSubject shipmentAlertSubject = new ShipmentAlertSubject();
@@ -102,6 +111,33 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         this.packagingSubsystemFacade = new PackagingSubsystemFacade(jdbcOperations);
         this.returnsSubsystemFacade = new ReturnsSubsystemFacade(jdbcOperations);
         this.barcodeSubsystemFacade = new BarcodeSubsystemFacade(eventIngestionService);
+    }
+
+    protected SupplyChainDatabaseFacade(PricingSubsystemFacade pricingSubsystemFacade) {
+        this.warehouseService = null;
+        this.pricingService = null;
+        this.orderService = null;
+        this.shipmentService = null;
+        this.forecastService = null;
+        this.eventIngestionService = null;
+        this.exceptionService = null;
+        this.pricingSubsystemFacade = pricingSubsystemFacade;
+        this.warehouseSubsystemFacade = null;
+        this.reportingSubsystemFacade = null;
+        this.uiSubsystemFacade = null;
+        this.stockLedgerSubsystemFacade = null;
+        this.inventorySubsystemFacade = null;
+        this.orderFulfillmentSubsystemFacade = null;
+        this.commissionSubsystemFacade = null;
+        this.ordersSubsystemFacade = null;
+        this.deliveryOrdersSubsystemFacade = null;
+        this.deliveryMonitoringSubsystemFacade = null;
+        this.demandForecastingSubsystemFacade = null;
+        this.logisticsSubsystemFacade = null;
+        this.exceptionHandlingSubsystemFacade = null;
+        this.packagingSubsystemFacade = null;
+        this.returnsSubsystemFacade = null;
+        this.barcodeSubsystemFacade = null;
     }
 
     public PricingSubsystemFacade pricing() {
@@ -176,6 +212,10 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         warehouseService.createWarehouse(warehouse);
     }
 
+    public void deleteWarehouse(String warehouseId) {
+        warehouseService.deleteWarehouse(warehouseId);
+    }
+
     public Optional<Warehouse> getWarehouse(String warehouseId) {
         return warehouseService.getWarehouse(warehouseId);
     }
@@ -188,6 +228,10 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         pricingService.createPrice(priceList);
     }
 
+    public void deletePrice(String priceId) {
+        pricingService.deletePrice(priceId);
+    }
+
     public Optional<PriceList> getPrice(String priceId) {
         return pricingService.getPrice(priceId);
     }
@@ -196,8 +240,16 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         orderService.createOrder(order);
     }
 
+    public void deleteOrder(String orderId) {
+        orderService.deleteOrder(orderId);
+    }
+
     public void addOrderItem(OrderItem item) {
         orderService.addOrderItem(item);
+    }
+
+    public void deleteOrderItem(String orderItemId) {
+        orderService.deleteOrderItem(orderItemId);
     }
 
     public Optional<Order> getOrder(String orderId) {
@@ -216,6 +268,10 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         shipmentService.updateShipment(shipment);
     }
 
+    public void deleteShipment(String shipmentId) {
+        shipmentService.deleteShipment(shipmentId);
+    }
+
     public Optional<Shipment> getShipment(String shipmentId) {
         return shipmentService.getShipment(shipmentId);
     }
@@ -224,12 +280,24 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         forecastService.createForecast(forecast);
     }
 
+    public void deleteDemandForecast(String forecastId) {
+        forecastService.deleteForecast(forecastId);
+    }
+
     public void ingestBarcodeEvent(BarcodeRfidEvent event) {
         eventIngestionService.ingestEvent(event);
     }
 
+    public void deleteBarcodeEvent(String eventId) {
+        eventIngestionService.deleteEvent(eventId);
+    }
+
     public void logSubsystemException(SubsystemException subsystemException) {
         exceptionService.logException(subsystemException);
+    }
+
+    public void deleteSubsystemException(String exceptionId) {
+        exceptionService.deleteException(exceptionId);
     }
 
     @Override

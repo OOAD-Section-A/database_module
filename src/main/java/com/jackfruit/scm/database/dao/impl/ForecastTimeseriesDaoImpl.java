@@ -26,6 +26,13 @@ public class ForecastTimeseriesDaoImpl extends AbstractJdbcDao implements Foreca
     }
 
     @Override
+    public void deleteById(String id) {
+        executeUpdate(
+                "DELETE FROM forecast_timeseries WHERE id = ?",
+                statement -> statement.setString(1, id));
+    }
+
+    @Override
     public Optional<ForecastTimeseries> findById(String id) {
         return queryForObject(
                 "SELECT * FROM forecast_timeseries WHERE id = ?",

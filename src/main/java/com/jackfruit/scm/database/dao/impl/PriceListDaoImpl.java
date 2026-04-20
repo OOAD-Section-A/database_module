@@ -50,6 +50,13 @@ public class PriceListDaoImpl extends AbstractJdbcDao implements PriceListDao {
     }
 
     @Override
+    public void deleteById(String priceId) {
+        executeUpdate(
+                "DELETE FROM price_list WHERE price_id = ?",
+                statement -> statement.setString(1, priceId));
+    }
+
+    @Override
     public Optional<PriceList> findById(String priceId) {
         return queryForObject(
                 "SELECT * FROM price_list WHERE price_id = ?",

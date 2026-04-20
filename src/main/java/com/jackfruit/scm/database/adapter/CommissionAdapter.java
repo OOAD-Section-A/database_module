@@ -19,16 +19,32 @@ public class CommissionAdapter {
         facade.commissions().createAgent(agent);
     }
 
+    public void deleteAgent(String agentId) {
+        facade.commissions().deleteAgent(agentId);
+    }
+
     public void createSale(CommissionSale sale) {
         facade.commissions().createCommissionSale(sale);
+    }
+
+    public void deleteSale(String saleId) {
+        facade.commissions().deleteCommissionSale(saleId);
     }
 
     public void createCommissionTier(CommissionTier tier) {
         facade.commissions().createCommissionTier(tier);
     }
 
+    public void deleteCommissionTier(String tierId) {
+        facade.commissions().deleteCommissionTier(tierId);
+    }
+
     public void createCommissionHistory(CommissionHistory history) {
         facade.commissions().createCommissionHistory(history);
+    }
+
+    public void deleteCommissionHistory(String commissionId) {
+        facade.commissions().deleteCommissionHistory(commissionId);
     }
 
     public List<Agent> listAgents() {

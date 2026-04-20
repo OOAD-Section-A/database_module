@@ -56,6 +56,13 @@ public class BarcodeEventDaoImpl extends AbstractJdbcDao implements BarcodeEvent
     }
 
     @Override
+    public void deleteById(String eventId) {
+        executeUpdate(
+                "DELETE FROM barcode_rfid_events WHERE event_id = ?",
+                statement -> statement.setString(1, eventId));
+    }
+
+    @Override
     public Optional<BarcodeRfidEvent> findById(String eventId) {
         return queryForObject(
                 "SELECT * FROM barcode_rfid_events WHERE event_id = ?",

@@ -376,4 +376,166 @@ CREATE OR REPLACE VIEW vw_reporting_dashboard AS
     LEFT JOIN commission_sales cs
         ON cs.sale_id = o.order_id;
 
+SET @has_idx_wms_task_status_priority := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'wms_task_queue'
+      AND index_name = 'idx_wms_task_status_priority'
+);
+SET @create_idx_wms_task_status_priority_sql := IF(
+    @has_idx_wms_task_status_priority = 0,
+    'CREATE INDEX idx_wms_task_status_priority ON wms_task_queue (status, priority)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @create_idx_wms_task_status_priority_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_idx_pick_tasks_status := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'pick_tasks'
+      AND index_name = 'idx_pick_tasks_status'
+);
+SET @create_idx_pick_tasks_status_sql := IF(
+    @has_idx_pick_tasks_status = 0,
+    'CREATE INDEX idx_pick_tasks_status ON pick_tasks (task_status, order_id)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @create_idx_pick_tasks_status_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_idx_po_supplier_status := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'proc_purchase_orders'
+      AND index_name = 'idx_po_supplier_status'
+);
+SET @create_idx_po_supplier_status_sql := IF(
+    @has_idx_po_supplier_status = 0,
+    'CREATE INDEX idx_po_supplier_status ON proc_purchase_orders (supplier_id, status)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @create_idx_po_supplier_status_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_idx_asn_expected_date := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'proc_asn'
+      AND index_name = 'idx_asn_expected_date'
+);
+SET @create_idx_asn_expected_date_sql := IF(
+    @has_idx_asn_expected_date = 0,
+    'CREATE INDEX idx_asn_expected_date ON proc_asn (expected_arrival)',
+    'SELECT 1'
+);
+PREPARE stmt FROM @create_idx_asn_expected_date_sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+DROP TRIGGER IF EXISTS trg_wms_lpn_weight_guard_insert;
+DROP TRIGGER IF EXISTS trg_wms_lpn_weight_guard_update;
+DROP TRIGGER IF EXISTS trg_proc_quality_inspections_match_insert;
+DROP TRIGGER IF EXISTS trg_proc_quality_inspections_match_update;
+
+DELIMITER $$
+
+CREATE TRIGGER trg_wms_lpn_weight_guard_insert
+BEFORE INSERT ON wms_storage_units_lpn
+FOR EACH ROW
+BEGIN
+    DECLARE v_bin_limit DECIMAL(10,2);
+    DECLARE v_current_weight DECIMAL(10,2);
+
+    IF NEW.current_bin_id IS NOT NULL THEN
+        SELECT max_weight_kg
+        INTO v_bin_limit
+        FROM bins
+        WHERE bin_id = NEW.current_bin_id;
+
+        IF v_bin_limit IS NOT NULL THEN
+            SELECT COALESCE(SUM(gross_weight_kg), 0.00)
+            INTO v_current_weight
+            FROM wms_storage_units_lpn
+            WHERE current_bin_id = NEW.current_bin_id;
+
+            IF v_current_weight + NEW.gross_weight_kg > v_bin_limit THEN
+                SIGNAL SQLSTATE '45000'
+                    SET MESSAGE_TEXT = 'LPN weight exceeds bins.max_weight_kg';
+            END IF;
+        END IF;
+    END IF;
+END$$
+
+CREATE TRIGGER trg_wms_lpn_weight_guard_update
+BEFORE UPDATE ON wms_storage_units_lpn
+FOR EACH ROW
+BEGIN
+    DECLARE v_bin_limit DECIMAL(10,2);
+    DECLARE v_current_weight DECIMAL(10,2);
+
+    IF NEW.current_bin_id IS NOT NULL THEN
+        SELECT max_weight_kg
+        INTO v_bin_limit
+        FROM bins
+        WHERE bin_id = NEW.current_bin_id;
+
+        IF v_bin_limit IS NOT NULL THEN
+            SELECT COALESCE(SUM(gross_weight_kg), 0.00)
+            INTO v_current_weight
+            FROM wms_storage_units_lpn
+            WHERE current_bin_id = NEW.current_bin_id
+              AND lpn_id <> OLD.lpn_id;
+
+            IF v_current_weight + NEW.gross_weight_kg > v_bin_limit THEN
+                SIGNAL SQLSTATE '45000'
+                    SET MESSAGE_TEXT = 'LPN weight exceeds bins.max_weight_kg';
+            END IF;
+        END IF;
+    END IF;
+END$$
+
+CREATE TRIGGER trg_proc_quality_inspections_match_insert
+BEFORE INSERT ON proc_quality_inspections
+FOR EACH ROW
+BEGIN
+    DECLARE v_received_qty INT;
+
+    SELECT received_qty
+    INTO v_received_qty
+    FROM goods_receipts
+    WHERE goods_receipt_id = NEW.grn_id;
+
+    IF NEW.passed_qty + NEW.failed_qty <> v_received_qty THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'passed_qty + failed_qty must equal goods_receipts.received_qty';
+    END IF;
+END$$
+
+CREATE TRIGGER trg_proc_quality_inspections_match_update
+BEFORE UPDATE ON proc_quality_inspections
+FOR EACH ROW
+BEGIN
+    DECLARE v_received_qty INT;
+
+    SELECT received_qty
+    INTO v_received_qty
+    FROM goods_receipts
+    WHERE goods_receipt_id = NEW.grn_id;
+
+    IF NEW.passed_qty + NEW.failed_qty <> v_received_qty THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'passed_qty + failed_qty must equal goods_receipts.received_qty';
+    END IF;
+END$$
+
+DELIMITER ;
+
 SET FOREIGN_KEY_CHECKS = 1;

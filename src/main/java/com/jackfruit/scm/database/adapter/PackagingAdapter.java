@@ -23,12 +23,24 @@ public class PackagingAdapter {
         facade.packaging().createPackagingJob(job);
     }
 
+    public void deletePackagingJob(String packageId) {
+        facade.packaging().deletePackagingJob(packageId);
+    }
+
     public void createRepairRequest(RepairRequest request) {
         facade.packaging().createRepairRequest(request);
     }
 
+    public void deleteRepairRequest(String requestId) {
+        facade.packaging().deleteRepairRequest(requestId);
+    }
+
     public void createReceiptRecord(ReceiptRecord record) {
         facade.packaging().createReceiptRecord(record);
+    }
+
+    public void deleteReceiptRecord(String receiptRecordId) {
+        facade.packaging().deleteReceiptRecord(receiptRecordId);
     }
 
     public List<ContractSkuPrice> listContractSkuPrices() {

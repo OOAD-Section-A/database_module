@@ -68,6 +68,16 @@ public class OrderFulfillmentSubsystemFacade {
                 });
     }
 
+    public void deleteFulfillmentOrder(String fulfillmentId) {
+        jdbcOperations.update(
+                """
+                UPDATE fulfillment_orders
+                SET cancellation_status = 'CANCELLED', cancellation_timestamp = CURRENT_TIMESTAMP
+                WHERE fulfillment_id = ?
+                """,
+                statement -> statement.setString(1, fulfillmentId));
+    }
+
     public List<FulfillmentOrder> listFulfillmentOrders() {
         return jdbcOperations.query(
                 "SELECT * FROM fulfillment_orders",
@@ -121,5 +131,11 @@ public class OrderFulfillmentSubsystemFacade {
                     statement.setTimestamp(5, Timestamp.valueOf(packingDetail.packedAt()));
                     statement.setBigDecimal(6, packingDetail.packageWeight());
                 });
+    }
+
+    public void deletePackingDetail(String packingId) {
+        jdbcOperations.update(
+                "DELETE FROM packing_details WHERE packing_id = ?",
+                statement -> statement.setString(1, packingId));
     }
 }

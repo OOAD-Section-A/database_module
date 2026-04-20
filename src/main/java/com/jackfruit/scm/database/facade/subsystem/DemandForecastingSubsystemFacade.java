@@ -31,6 +31,10 @@ public class DemandForecastingSubsystemFacade {
         forecastService.createForecast(forecast);
     }
 
+    public void deleteForecast(String forecastId) {
+        forecastService.deleteForecast(forecastId);
+    }
+
     public List<DemandForecast> listForecasts() {
         return forecastService.getForecasts();
     }
@@ -64,6 +68,12 @@ public class DemandForecastingSubsystemFacade {
                         resultSet.getString("region")));
     }
 
+    public void deleteSalesRecord(String saleId) {
+        jdbcOperations.update(
+                "DELETE FROM sales_records WHERE sale_id = ?",
+                statement -> statement.setString(1, saleId));
+    }
+
     public void createHolidayCalendar(HolidayCalendar holidayCalendar) {
         jdbcOperations.update(
                 "INSERT INTO holiday_calendar (holiday_id, holiday_date, holiday_name, holiday_type, region_applicable) VALUES (?, ?, ?, ?, ?)",
@@ -74,6 +84,12 @@ public class DemandForecastingSubsystemFacade {
                     statement.setString(4, holidayCalendar.holidayType());
                     statement.setString(5, holidayCalendar.regionApplicable());
                 });
+    }
+
+    public void deleteHolidayCalendar(String holidayId) {
+        jdbcOperations.update(
+                "DELETE FROM holiday_calendar WHERE holiday_id = ?",
+                statement -> statement.setString(1, holidayId));
     }
 
     public void createPromotionalCalendar(PromotionalCalendar promotionalCalendar) {
@@ -95,6 +111,12 @@ public class DemandForecastingSubsystemFacade {
                 });
     }
 
+    public void deletePromotionalCalendar(String promoCalendarId) {
+        jdbcOperations.update(
+                "DELETE FROM promotional_calendar WHERE promo_calendar_id = ?",
+                statement -> statement.setString(1, promoCalendarId));
+    }
+
     public void createProductMetadata(ProductMetadata productMetadata) {
         jdbcOperations.update(
                 """
@@ -109,6 +131,12 @@ public class DemandForecastingSubsystemFacade {
                     statement.setString(4, productMetadata.subCategory());
                     statement.setString(5, productMetadata.seasonalityType());
                 });
+    }
+
+    public void deleteProductMetadata(String productId) {
+        jdbcOperations.update(
+                "DELETE FROM product_metadata WHERE product_id = ?",
+                statement -> statement.setString(1, productId));
     }
 
     public void createProductLifecycleStage(ProductLifecycleStage stage) {
@@ -126,6 +154,12 @@ public class DemandForecastingSubsystemFacade {
                     statement.setString(5, stage.previousStage());
                     statement.setDate(6, stage.transitionDate() == null ? null : Date.valueOf(stage.transitionDate()));
                 });
+    }
+
+    public void deleteProductLifecycleStage(String lifecycleId) {
+        jdbcOperations.update(
+                "DELETE FROM product_lifecycle_stages WHERE lifecycle_id = ?",
+                statement -> statement.setString(1, lifecycleId));
     }
 
     public void createInventorySupply(InventorySupply inventorySupply) {
@@ -156,6 +190,12 @@ public class DemandForecastingSubsystemFacade {
                 });
     }
 
+    public void deleteInventorySupply(String productId) {
+        jdbcOperations.update(
+                "DELETE FROM inventory_supply WHERE product_id = ?",
+                statement -> statement.setString(1, productId));
+    }
+
     public void createForecastPerformanceMetric(ForecastPerformanceMetric metric) {
         jdbcOperations.update(
                 """
@@ -179,8 +219,18 @@ public class DemandForecastingSubsystemFacade {
                 });
     }
 
+    public void deleteForecastPerformanceMetric(String evalId) {
+        jdbcOperations.update(
+                "DELETE FROM forecast_performance_metrics WHERE eval_id = ?",
+                statement -> statement.setString(1, evalId));
+    }
+
     public void createForecastTimeseries(ForecastTimeseries timeseries) {
         forecastTimeseriesDao.save(timeseries);
+    }
+
+    public void deleteForecastTimeseries(String timeseriesId) {
+        forecastTimeseriesDao.deleteById(timeseriesId);
     }
 
     public void createBatchForecastTimeseries(List<ForecastTimeseries> timeseriesList) {

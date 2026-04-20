@@ -14,4 +14,8 @@ public class BarcodeTrackingAdapter {
     public void recordBarcodeEvent(BarcodeRfidEvent event) {
         facade.barcode().recordBarcodeEvent(event);
     }
+
+    public void deleteBarcodeEvent(String eventId) {
+        facade.barcode().deleteBarcodeEvent(eventId);
+    }
 }

@@ -36,6 +36,10 @@ public class WarehouseSubsystemFacade {
         return warehouseService.getWarehouses();
     }
 
+    public void deleteWarehouse(String warehouseId) {
+        warehouseService.deleteWarehouse(warehouseId);
+    }
+
     public void createZone(WarehouseZone zone) {
         jdbcOperations.update(
                 "INSERT INTO warehouse_zones (zone_id, warehouse_id, zone_type) VALUES (?, ?, ?)",
@@ -55,6 +59,12 @@ public class WarehouseSubsystemFacade {
                         resultSet.getString("zone_type")));
     }
 
+    public void deleteZone(String zoneId) {
+        jdbcOperations.update(
+                "DELETE FROM warehouse_zones WHERE zone_id = ?",
+                statement -> statement.setString(1, zoneId));
+    }
+
     public void createBin(Bin bin) {
         jdbcOperations.update(
                 "INSERT INTO bins (bin_id, zone_id, bin_capacity, bin_status) VALUES (?, ?, ?, ?)",
@@ -64,6 +74,12 @@ public class WarehouseSubsystemFacade {
                     statement.setInt(3, bin.binCapacity());
                     statement.setString(4, bin.binStatus());
                 });
+    }
+
+    public void deleteBin(String binId) {
+        jdbcOperations.update(
+                "DELETE FROM bins WHERE bin_id = ?",
+                statement -> statement.setString(1, binId));
     }
 
     public void createGoodsReceipt(GoodsReceipt goodsReceipt) {
@@ -85,6 +101,12 @@ public class WarehouseSubsystemFacade {
                 });
     }
 
+    public void deleteGoodsReceipt(String goodsReceiptId) {
+        jdbcOperations.update(
+                "DELETE FROM goods_receipts WHERE goods_receipt_id = ?",
+                statement -> statement.setString(1, goodsReceiptId));
+    }
+
     public void createStockRecord(StockRecord stockRecord) {
         jdbcOperations.update(
                 "INSERT INTO stock_records (stock_id, product_id, bin_id, quantity, last_updated) VALUES (?, ?, ?, ?, ?)",
@@ -95,6 +117,12 @@ public class WarehouseSubsystemFacade {
                     statement.setInt(4, stockRecord.quantity());
                     statement.setTimestamp(5, Timestamp.valueOf(stockRecord.lastUpdated()));
                 });
+    }
+
+    public void deleteStockRecord(String stockId) {
+        jdbcOperations.update(
+                "DELETE FROM stock_records WHERE stock_id = ?",
+                statement -> statement.setString(1, stockId));
     }
 
     public List<StockRecord> listStockRecords() {
@@ -126,6 +154,12 @@ public class WarehouseSubsystemFacade {
                 });
     }
 
+    public void deleteStockMovement(String movementId) {
+        jdbcOperations.update(
+                "DELETE FROM stock_movements WHERE movement_id = ?",
+                statement -> statement.setString(1, movementId));
+    }
+
     public void createPickTask(PickTask pickTask) {
         jdbcOperations.update(
                 """
@@ -143,6 +177,12 @@ public class WarehouseSubsystemFacade {
                 });
     }
 
+    public void deletePickTask(String pickTaskId) {
+        jdbcOperations.update(
+                "DELETE FROM pick_tasks WHERE pick_task_id = ?",
+                statement -> statement.setString(1, pickTaskId));
+    }
+
     public void createStagingDispatch(StagingDispatch stagingDispatch) {
         jdbcOperations.update(
                 "INSERT INTO staging_dispatch (staging_id, dock_door_id, order_id, dispatched_at, shipment_status) VALUES (?, ?, ?, ?, ?)",
@@ -155,6 +195,12 @@ public class WarehouseSubsystemFacade {
                 });
     }
 
+    public void deleteStagingDispatch(String stagingId) {
+        jdbcOperations.update(
+                "DELETE FROM staging_dispatch WHERE staging_id = ?",
+                statement -> statement.setString(1, stagingId));
+    }
+
     public void createWarehouseReturn(WarehouseReturn warehouseReturn) {
         jdbcOperations.update(
                 "INSERT INTO warehouse_returns (return_id, product_id, return_qty, condition_status, return_ts) VALUES (?, ?, ?, ?, ?)",
@@ -165,6 +211,12 @@ public class WarehouseSubsystemFacade {
                     statement.setString(4, warehouseReturn.conditionStatus());
                     statement.setTimestamp(5, Timestamp.valueOf(warehouseReturn.returnTimestamp()));
                 });
+    }
+
+    public void deleteWarehouseReturn(String returnId) {
+        jdbcOperations.update(
+                "DELETE FROM warehouse_returns WHERE return_id = ?",
+                statement -> statement.setString(1, returnId));
     }
 
     public void createCycleCount(CycleCount cycleCount) {
@@ -185,6 +237,12 @@ public class WarehouseSubsystemFacade {
                     statement.setInt(8, cycleCount.countedQty());
                     statement.setTimestamp(9, Timestamp.valueOf(cycleCount.countTimestamp()));
                 });
+    }
+
+    public void deleteCycleCount(String cycleCountId) {
+        jdbcOperations.update(
+                "DELETE FROM cycle_counts WHERE cycle_count_id = ?",
+                statement -> statement.setString(1, cycleCountId));
     }
 
     public void createStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
@@ -220,6 +278,12 @@ public class WarehouseSubsystemFacade {
                     statement.setString(5, storageUnit.status());
                     statement.setString(6, storageUnit.lpnId());
                 });
+    }
+
+    public void deleteStorageUnitLpn(String lpnId) {
+        jdbcOperations.update(
+                "DELETE FROM wms_storage_units_lpn WHERE lpn_id = ?",
+                statement -> statement.setString(1, lpnId));
     }
 
     public List<WmsStorageUnitLpn> listStorageUnitLpns() {
@@ -268,6 +332,12 @@ public class WarehouseSubsystemFacade {
                     statement.setString(5, pickWave.waveId());
                     statement.setInt(6, pickWave.version());
                 });
+    }
+
+    public void cancelPickWave(String waveId) {
+        jdbcOperations.update(
+                "UPDATE wms_pick_waves SET status = 'CANCELLED', version = version + 1 WHERE wave_id = ?",
+                statement -> statement.setString(1, waveId));
     }
 
     public List<WmsPickWave> listPickWaves() {
@@ -323,6 +393,12 @@ public class WarehouseSubsystemFacade {
                     statement.setString(8, taskQueueItem.taskId());
                     statement.setInt(9, taskQueueItem.version());
                 });
+    }
+
+    public void deleteTaskQueueItem(String taskId) {
+        jdbcOperations.update(
+                "DELETE FROM wms_task_queue WHERE task_id = ?",
+                statement -> statement.setString(1, taskId));
     }
 
     public List<WmsTaskQueueItem> listTaskQueueItems() {

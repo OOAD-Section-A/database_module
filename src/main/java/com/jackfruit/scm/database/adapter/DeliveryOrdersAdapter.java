@@ -21,6 +21,10 @@ public class DeliveryOrdersAdapter {
         facade.deliveryOrders().updateDeliveryOrder(shipment);
     }
 
+    public void deleteDeliveryOrder(String shipmentId) {
+        facade.deliveryOrders().deleteDeliveryOrder(shipmentId);
+    }
+
     public Optional<Shipment> getDeliveryOrder(String shipmentId) {
         return facade.deliveryOrders().getDeliveryOrder(shipmentId);
     }

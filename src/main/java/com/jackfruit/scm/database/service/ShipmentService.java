@@ -30,6 +30,11 @@ public class ShipmentService {
         notifyIfAttentionRequired(shipment);
     }
 
+    public void deleteShipment(String shipmentId) {
+        ValidationUtils.requireText(shipmentId, "shipmentId");
+        shipmentDao.deleteById(shipmentId);
+    }
+
     public Optional<Shipment> getShipment(String shipmentId) {
         ValidationUtils.requireText(shipmentId, "shipmentId");
         return shipmentDao.findById(shipmentId);

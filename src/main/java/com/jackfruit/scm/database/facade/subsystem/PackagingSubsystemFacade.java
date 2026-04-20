@@ -39,6 +39,12 @@ public class PackagingSubsystemFacade {
                 });
     }
 
+    public void deletePackagingJob(String packageId) {
+        jdbcOperations.update(
+                "DELETE FROM packaging_jobs WHERE package_id = ?",
+                statement -> statement.setString(1, packageId));
+    }
+
     public List<PackagingJob> listPackagingJobs() {
         return jdbcOperations.query(
                 "SELECT * FROM packaging_jobs",
@@ -66,6 +72,12 @@ public class PackagingSubsystemFacade {
                 });
     }
 
+    public void deleteRepairRequest(String requestId) {
+        jdbcOperations.update(
+                "DELETE FROM repair_requests WHERE request_id = ?",
+                statement -> statement.setString(1, requestId));
+    }
+
     public void createReceiptRecord(ReceiptRecord record) {
         jdbcOperations.update(
                 "INSERT INTO receipt_records (receipt_record_id, order_id, package_id, received_amount, receipt_status, recorded_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -77,6 +89,12 @@ public class PackagingSubsystemFacade {
                     statement.setString(5, record.receiptStatus());
                     statement.setTimestamp(6, Timestamp.valueOf(record.recordedAt()));
                 });
+    }
+
+    public void deleteReceiptRecord(String receiptRecordId) {
+        jdbcOperations.update(
+                "DELETE FROM receipt_records WHERE receipt_record_id = ?",
+                statement -> statement.setString(1, receiptRecordId));
     }
 
     public List<ContractSkuPrice> listContractSkuPrices() {

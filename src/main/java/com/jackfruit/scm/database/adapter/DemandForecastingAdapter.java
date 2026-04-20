@@ -24,36 +24,72 @@ public class DemandForecastingAdapter {
         facade.demandForecasting().createForecast(forecast);
     }
 
+    public void deleteForecast(String forecastId) {
+        facade.demandForecasting().deleteForecast(forecastId);
+    }
+
     public void createSalesRecord(SalesRecord salesRecord) {
         facade.demandForecasting().createSalesRecord(salesRecord);
+    }
+
+    public void deleteSalesRecord(String saleId) {
+        facade.demandForecasting().deleteSalesRecord(saleId);
     }
 
     public void createHolidayCalendar(HolidayCalendar holidayCalendar) {
         facade.demandForecasting().createHolidayCalendar(holidayCalendar);
     }
 
+    public void deleteHolidayCalendar(String holidayId) {
+        facade.demandForecasting().deleteHolidayCalendar(holidayId);
+    }
+
     public void createPromotionalCalendar(PromotionalCalendar promotionalCalendar) {
         facade.demandForecasting().createPromotionalCalendar(promotionalCalendar);
+    }
+
+    public void deletePromotionalCalendar(String promoCalendarId) {
+        facade.demandForecasting().deletePromotionalCalendar(promoCalendarId);
     }
 
     public void createProductMetadata(ProductMetadata productMetadata) {
         facade.demandForecasting().createProductMetadata(productMetadata);
     }
 
+    public void deleteProductMetadata(String productId) {
+        facade.demandForecasting().deleteProductMetadata(productId);
+    }
+
     public void createProductLifecycleStage(ProductLifecycleStage stage) {
         facade.demandForecasting().createProductLifecycleStage(stage);
+    }
+
+    public void deleteProductLifecycleStage(String lifecycleId) {
+        facade.demandForecasting().deleteProductLifecycleStage(lifecycleId);
     }
 
     public void createInventorySupply(InventorySupply inventorySupply) {
         facade.demandForecasting().createInventorySupply(inventorySupply);
     }
 
+    public void deleteInventorySupply(String productId) {
+        facade.demandForecasting().deleteInventorySupply(productId);
+    }
+
     public void createForecastPerformanceMetric(ForecastPerformanceMetric metric) {
         facade.demandForecasting().createForecastPerformanceMetric(metric);
     }
 
+    public void deleteForecastPerformanceMetric(String evalId) {
+        facade.demandForecasting().deleteForecastPerformanceMetric(evalId);
+    }
+
     public void createForecastTimeseries(ForecastTimeseries timeseries) {
         facade.demandForecasting().createForecastTimeseries(timeseries);
+    }
+
+    public void deleteForecastTimeseries(String timeseriesId) {
+        facade.demandForecasting().deleteForecastTimeseries(timeseriesId);
     }
 
     public void createBatchForecastTimeseries(List<ForecastTimeseries> timeseriesList) {

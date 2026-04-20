@@ -25,6 +25,11 @@ public class ForecastService {
         demandForecastDao.update(forecast);
     }
 
+    public void deleteForecast(String forecastId) {
+        ValidationUtils.requireText(forecastId, "forecastId");
+        demandForecastDao.deleteById(forecastId);
+    }
+
     public Optional<DemandForecast> getForecast(String forecastId) {
         ValidationUtils.requireText(forecastId, "forecastId");
         return demandForecastDao.findById(forecastId);

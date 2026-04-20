@@ -30,11 +30,37 @@ GRANT SELECT ON `OOAD`.`discount_policies` TO `packing_repairs_receipt_ro`;
 GRANT SELECT ON `OOAD`.`bundle_promotions` TO `packing_repairs_receipt_ro`;
 GRANT SELECT ON `OOAD`.`promotions` TO `packing_repairs_receipt_ro`;
 GRANT SELECT ON `OOAD`.`promotion_eligible_skus` TO `packing_repairs_receipt_ro`;
+GRANT SELECT ON `OOAD`.`bundle_promotion_skus` TO `packing_repairs_receipt_ro`;
+GRANT SELECT ON `OOAD`.`price_list` TO `packing_repairs_receipt_ro`;
 
 GRANT SELECT ON `OOAD`.`customer_tier_cache` TO `reporting_dashboard_ro`;
+GRANT SELECT ON `OOAD`.`price_list` TO `reporting_dashboard_ro`;
+GRANT SELECT ON `OOAD`.`promotions` TO `reporting_dashboard_ro`;
+GRANT SELECT ON `OOAD`.`bundle_promotions` TO `reporting_dashboard_ro`;
+GRANT SELECT ON `OOAD`.`discount_policies` TO `reporting_dashboard_ro`;
+GRANT SELECT ON `OOAD`.`rebate_programs` TO `reporting_dashboard_ro`;
+GRANT SELECT ON `OOAD`.`regional_pricing_multipliers` TO `reporting_dashboard_ro`;
 
 -- WMS execution tables are owned by Warehouse Management.
--- No DELETE grant is issued because the PDF calls out soft-state operational records.
-GRANT SELECT, INSERT, UPDATE ON `OOAD`.`wms_storage_units_lpn` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`wms_storage_units_lpn` TO `warehouse_management_rw`;
 GRANT SELECT, INSERT, UPDATE ON `OOAD`.`wms_pick_waves` TO `warehouse_management_rw`;
-GRANT SELECT, INSERT, UPDATE ON `OOAD`.`wms_task_queue` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`wms_task_queue` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`warehouse_zones` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`bins` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE ON `OOAD`.`goods_receipts` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`stock_records` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`stock_movements` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`pick_tasks` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`staging_dispatch` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`warehouse_returns` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`cycle_counts` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_suppliers` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_product_supplier` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE ON `OOAD`.`proc_purchase_orders` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_po_items` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_asn` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_quality_inspections` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_supplier_invoices` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_invoice_items` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_supplier_payments` TO `warehouse_management_rw`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `OOAD`.`proc_discrepancies` TO `warehouse_management_rw`;

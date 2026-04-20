@@ -56,6 +56,12 @@ public class InventorySubsystemFacade {
                 });
     }
 
+    public void deleteProduct(String productId) {
+        jdbcOperations.update(
+                "DELETE FROM products WHERE product_id = ?",
+                statement -> statement.setString(1, productId));
+    }
+
     public List<Product> listProducts() {
         return jdbcOperations.query(
                 "SELECT * FROM products",
@@ -100,6 +106,12 @@ public class InventorySubsystemFacade {
                 });
     }
 
+    public void deleteProductBatch(String batchId) {
+        jdbcOperations.update(
+                "DELETE FROM product_batches WHERE batch_id = ?",
+                statement -> statement.setString(1, batchId));
+    }
+
     public void createStockLevel(StockLevel stockLevel) {
         jdbcOperations.update(
                 """
@@ -123,6 +135,12 @@ public class InventorySubsystemFacade {
                     statement.setTimestamp(11, stockLevel.snapshotTimestamp() == null ? null : Timestamp.valueOf(stockLevel.snapshotTimestamp()));
                     statement.setTimestamp(12, Timestamp.valueOf(stockLevel.lastUpdated()));
                 });
+    }
+
+    public void deleteStockLevel(String stockLevelId) {
+        jdbcOperations.update(
+                "DELETE FROM stock_levels WHERE stock_level_id = ?",
+                statement -> statement.setString(1, stockLevelId));
     }
 
     public void updateStockLevel(StockLevel stockLevel) {
@@ -206,6 +224,12 @@ public class InventorySubsystemFacade {
                 });
     }
 
+    public void deleteExpiryTracking(String expiryId) {
+        jdbcOperations.update(
+                "DELETE FROM expiry_tracking WHERE expiry_id = ?",
+                statement -> statement.setString(1, expiryId));
+    }
+
     public List<ExpiryTracking> listExpiryTracking() {
         return jdbcOperations.query(
                 "SELECT * FROM expiry_tracking",
@@ -243,6 +267,12 @@ public class InventorySubsystemFacade {
                     statement.setBoolean(12, adjustment.auditLockFlag());
                     statement.setTimestamp(13, adjustment.adjustmentDate() == null ? null : Timestamp.valueOf(adjustment.adjustmentDate()));
                 });
+    }
+
+    public void deleteStockAdjustment(String adjustmentId) {
+        jdbcOperations.update(
+                "DELETE FROM stock_adjustments WHERE adjustment_id = ?",
+                statement -> statement.setString(1, adjustmentId));
     }
 
     public List<StockAdjustment> listStockAdjustments() {
@@ -288,6 +318,12 @@ public class InventorySubsystemFacade {
                 });
     }
 
+    public void deleteReorderManagement(String reorderId) {
+        jdbcOperations.update(
+                "UPDATE reorder_management SET reorder_status = 'CANCELLED' WHERE reorder_id = ?",
+                statement -> statement.setString(1, reorderId));
+    }
+
     public List<ReorderManagement> listReorderManagement() {
         return jdbcOperations.query(
                 "SELECT * FROM reorder_management",
@@ -325,6 +361,12 @@ public class InventorySubsystemFacade {
                     statement.setString(8, stockReservation.linkedSku());
                     statement.setObject(9, stockReservation.reservedQuantity());
                 });
+    }
+
+    public void deleteStockReservation(String reservationId) {
+        jdbcOperations.update(
+                "UPDATE stock_reservations SET reservation_status = 'CANCELLED' WHERE reservation_id = ?",
+                statement -> statement.setString(1, reservationId));
     }
 
     public List<StockReservation> listStockReservations() {
@@ -365,6 +407,16 @@ public class InventorySubsystemFacade {
                 });
     }
 
+    public void deleteStockFreeze(String freezeId) {
+        jdbcOperations.update(
+                """
+                UPDATE stock_freeze
+                SET freeze_status = FALSE, freeze_status_flag = FALSE
+                WHERE freeze_id = ?
+                """,
+                statement -> statement.setString(1, freezeId));
+    }
+
     public List<StockFreeze> listStockFreeze() {
         return jdbcOperations.query(
                 "SELECT * FROM stock_freeze",
@@ -398,6 +450,12 @@ public class InventorySubsystemFacade {
                     statement.setString(6, deadStock.actionFlag());
                     statement.setString(7, deadStock.actionStatus());
                 });
+    }
+
+    public void deleteDeadStock(String deadStockId) {
+        jdbcOperations.update(
+                "UPDATE dead_stock SET action_status = 'DISMISSED' WHERE dead_stock_id = ?",
+                statement -> statement.setString(1, deadStockId));
     }
 
     public List<DeadStock> listDeadStock() {
@@ -437,6 +495,12 @@ public class InventorySubsystemFacade {
                     statement.setString(12, stockValuation.stockValueByCategory());
                     statement.setString(13, stockValuation.monthlyValuationTrend());
                 });
+    }
+
+    public void deleteStockValuation(String valuationId) {
+        jdbcOperations.update(
+                "DELETE FROM stock_valuation WHERE valuation_id = ?",
+                statement -> statement.setString(1, valuationId));
     }
 
     public List<StockValuation> listStockValuation() {

@@ -28,40 +28,80 @@ public class WarehouseManagementAdapter {
         facade.warehouse().registerWarehouse(warehouse);
     }
 
+    public void deleteWarehouse(String warehouseId) {
+        facade.warehouse().deleteWarehouse(warehouseId);
+    }
+
     public void createZone(WarehouseZone zone) {
         facade.warehouse().createZone(zone);
+    }
+
+    public void deleteZone(String zoneId) {
+        facade.warehouse().deleteZone(zoneId);
     }
 
     public void createBin(Bin bin) {
         facade.warehouse().createBin(bin);
     }
 
+    public void deleteBin(String binId) {
+        facade.warehouse().deleteBin(binId);
+    }
+
     public void createGoodsReceipt(GoodsReceipt goodsReceipt) {
         facade.warehouse().createGoodsReceipt(goodsReceipt);
+    }
+
+    public void deleteGoodsReceipt(String goodsReceiptId) {
+        facade.warehouse().deleteGoodsReceipt(goodsReceiptId);
     }
 
     public void createStockRecord(StockRecord stockRecord) {
         facade.warehouse().createStockRecord(stockRecord);
     }
 
+    public void deleteStockRecord(String stockId) {
+        facade.warehouse().deleteStockRecord(stockId);
+    }
+
     public void createStockMovement(StockMovement stockMovement) {
         facade.warehouse().createStockMovement(stockMovement);
+    }
+
+    public void deleteStockMovement(String movementId) {
+        facade.warehouse().deleteStockMovement(movementId);
     }
 
     public void createPickTask(PickTask pickTask) {
         facade.warehouse().createPickTask(pickTask);
     }
 
+    public void deletePickTask(String pickTaskId) {
+        facade.warehouse().deletePickTask(pickTaskId);
+    }
+
     public void createStagingDispatch(StagingDispatch stagingDispatch) {
         facade.warehouse().createStagingDispatch(stagingDispatch);
+    }
+
+    public void deleteStagingDispatch(String stagingId) {
+        facade.warehouse().deleteStagingDispatch(stagingId);
     }
 
     public void createWarehouseReturn(WarehouseReturn warehouseReturn) {
         facade.warehouse().createWarehouseReturn(warehouseReturn);
     }
 
+    public void deleteWarehouseReturn(String returnId) {
+        facade.warehouse().deleteWarehouseReturn(returnId);
+    }
+
     public void createCycleCount(CycleCount cycleCount) {
         facade.warehouse().createCycleCount(cycleCount);
+    }
+
+    public void deleteCycleCount(String cycleCountId) {
+        facade.warehouse().deleteCycleCount(cycleCountId);
     }
 
     public void createStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
@@ -70,6 +110,10 @@ public class WarehouseManagementAdapter {
 
     public void updateStorageUnitLpn(WmsStorageUnitLpn storageUnit) {
         facade.warehouse().updateStorageUnitLpn(storageUnit);
+    }
+
+    public void deleteStorageUnitLpn(String lpnId) {
+        facade.warehouse().deleteStorageUnitLpn(lpnId);
     }
 
     public List<WmsStorageUnitLpn> listStorageUnitLpns() {
@@ -84,6 +128,10 @@ public class WarehouseManagementAdapter {
         facade.warehouse().updatePickWave(pickWave);
     }
 
+    public void cancelPickWave(String waveId) {
+        facade.warehouse().cancelPickWave(waveId);
+    }
+
     public List<WmsPickWave> listPickWaves() {
         return facade.warehouse().listPickWaves();
     }
@@ -94,6 +142,10 @@ public class WarehouseManagementAdapter {
 
     public void updateTaskQueueItem(WmsTaskQueueItem taskQueueItem) {
         facade.warehouse().updateTaskQueueItem(taskQueueItem);
+    }
+
+    public void deleteTaskQueueItem(String taskId) {
+        facade.warehouse().deleteTaskQueueItem(taskId);
     }
 
     public List<WmsTaskQueueItem> listTaskQueueItems() {

@@ -24,6 +24,11 @@ public class ExceptionService {
         exceptionLogDao.update(subsystemException);
     }
 
+    public void deleteException(String exceptionId) {
+        ValidationUtils.requireText(exceptionId, "exceptionId");
+        exceptionLogDao.deleteById(exceptionId);
+    }
+
     public Optional<SubsystemException> getException(String exceptionId) {
         ValidationUtils.requireText(exceptionId, "exceptionId");
         return exceptionLogDao.findById(exceptionId);

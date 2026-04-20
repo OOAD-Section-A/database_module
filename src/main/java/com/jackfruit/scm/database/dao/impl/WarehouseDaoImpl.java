@@ -28,6 +28,13 @@ public class WarehouseDaoImpl extends AbstractJdbcDao implements WarehouseDao {
     }
 
     @Override
+    public void deleteById(String warehouseId) {
+        executeUpdate(
+                "DELETE FROM warehouses WHERE warehouse_id = ?",
+                statement -> statement.setString(1, warehouseId));
+    }
+
+    @Override
     public Optional<Warehouse> findById(String warehouseId) {
         return queryForObject(
                 "SELECT warehouse_id, warehouse_name FROM warehouses WHERE warehouse_id = ?",

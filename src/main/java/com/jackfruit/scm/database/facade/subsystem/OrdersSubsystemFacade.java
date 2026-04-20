@@ -18,6 +18,10 @@ public class OrdersSubsystemFacade {
         orderService.createOrder(order);
     }
 
+    public void deleteOrder(String orderId) {
+        orderService.deleteOrder(orderId);
+    }
+
     public List<Order> listOrders() {
         return orderService.getOrders();
     }
@@ -28,6 +32,10 @@ public class OrdersSubsystemFacade {
 
     public void addOrderItem(OrderItem item) {
         orderService.addOrderItem(item);
+    }
+
+    public void deleteOrderItem(String orderItemId) {
+        orderService.deleteOrderItem(orderItemId);
     }
 
     public List<OrderItem> listOrderItems(String orderId) {

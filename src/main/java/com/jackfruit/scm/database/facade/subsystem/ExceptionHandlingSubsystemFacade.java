@@ -16,6 +16,10 @@ public class ExceptionHandlingSubsystemFacade {
         exceptionService.logException(subsystemException);
     }
 
+    public void deleteException(String exceptionId) {
+        exceptionService.deleteException(exceptionId);
+    }
+
     public List<SubsystemException> listExceptions() {
         return exceptionService.getExceptions();
     }

@@ -21,20 +21,40 @@ public class UiAdapter {
         facade.ui().createUser(user);
     }
 
+    public void deleteUser(String username) {
+        facade.ui().deleteUser(username);
+    }
+
     public void createSession(UiSession session) {
         facade.ui().createSession(session);
+    }
+
+    public void deleteSession(String jwtSessionToken) {
+        facade.ui().deleteSession(jwtSessionToken);
     }
 
     public void createNotification(UiNotification notification) {
         facade.ui().createNotification(notification);
     }
 
+    public void deleteNotification(int notificationId) {
+        facade.ui().deleteNotification(notificationId);
+    }
+
     public void createAuditLog(UiAuditLog auditLog) {
         facade.ui().createAuditLog(auditLog);
     }
 
+    public void deleteAuditLog(long auditId) {
+        facade.ui().deleteAuditLog(auditId);
+    }
+
     public void createPanelState(UiPanelState panelState) {
         facade.ui().createPanelState(panelState);
+    }
+
+    public void deletePanelState(String panelId) {
+        facade.ui().deletePanelState(panelId);
     }
 
     public List<ForecastTimeseries> listForecastTimeseriesForForecast(String forecastId) {

@@ -50,6 +50,12 @@ public class LogisticsSubsystemFacade {
                 });
     }
 
+    public void deleteShipment(String shipmentId) {
+        jdbcOperations.update(
+                "DELETE FROM shipments WHERE shipment_id = ?",
+                statement -> statement.setString(1, shipmentId));
+    }
+
     public List<LogisticsShipment> listShipments() {
         return jdbcOperations.query(
                 "SELECT * FROM shipments",
@@ -88,6 +94,12 @@ public class LogisticsSubsystemFacade {
                 });
     }
 
+    public void deleteRoute(String routeId) {
+        jdbcOperations.update(
+                "DELETE FROM logistics_routes WHERE route_id = ?",
+                statement -> statement.setString(1, routeId));
+    }
+
     public void createShipmentAlert(ShipmentAlert alert) {
         jdbcOperations.update(
                 "INSERT INTO shipment_alerts (alert_id, shipment_id, alert_message, alert_severity, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -98,5 +110,11 @@ public class LogisticsSubsystemFacade {
                     statement.setString(4, alert.alertSeverity());
                     statement.setTimestamp(5, Timestamp.valueOf(alert.createdAt()));
                 });
+    }
+
+    public void deleteShipmentAlert(String alertId) {
+        jdbcOperations.update(
+                "DELETE FROM shipment_alerts WHERE alert_id = ?",
+                statement -> statement.setString(1, alertId));
     }
 }

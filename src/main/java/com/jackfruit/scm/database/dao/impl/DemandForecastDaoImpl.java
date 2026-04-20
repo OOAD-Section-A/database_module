@@ -67,6 +67,13 @@ public class DemandForecastDaoImpl extends AbstractJdbcDao implements DemandFore
     }
 
     @Override
+    public void deleteById(String forecastId) {
+        executeUpdate(
+                "DELETE FROM demand_forecasts WHERE forecast_id = ?",
+                statement -> statement.setString(1, forecastId));
+    }
+
+    @Override
     public Optional<DemandForecast> findById(String forecastId) {
         return queryForObject(
                 "SELECT * FROM demand_forecasts WHERE forecast_id = ?",

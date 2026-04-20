@@ -30,6 +30,12 @@ public class CommissionSubsystemFacade {
                 });
     }
 
+    public void deleteAgent(String agentId) {
+        jdbcOperations.update(
+                "UPDATE agents SET status = 'INACTIVE' WHERE agent_id = ?",
+                statement -> statement.setString(1, agentId));
+    }
+
     public List<Agent> listAgents() {
         return jdbcOperations.query(
                 "SELECT * FROM agents",
@@ -52,6 +58,12 @@ public class CommissionSubsystemFacade {
                     statement.setBigDecimal(4, tier.maxSales());
                     statement.setBigDecimal(5, tier.commissionPct());
                 });
+    }
+
+    public void deleteCommissionTier(String tierId) {
+        jdbcOperations.update(
+                "DELETE FROM commission_tiers WHERE tier_id = ?",
+                statement -> statement.setString(1, tierId));
     }
 
     public List<CommissionSale> listCommissionSales() {
@@ -88,6 +100,12 @@ public class CommissionSubsystemFacade {
                 });
     }
 
+    public void deleteCommissionSale(String saleId) {
+        jdbcOperations.update(
+                "UPDATE commission_sales SET status = 'VOIDED' WHERE sale_id = ?",
+                statement -> statement.setString(1, saleId));
+    }
+
     public void createCommissionHistory(CommissionHistory history) {
         jdbcOperations.update(
                 "INSERT INTO commission_history (commission_id, agent_id, period_start, period_end, total_sales, tier_breakdown, total_commission, calculated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -101,6 +119,12 @@ public class CommissionSubsystemFacade {
                     statement.setBigDecimal(7, history.totalCommission());
                     statement.setTimestamp(8, Timestamp.valueOf(history.calculatedAt()));
                 });
+    }
+
+    public void deleteCommissionHistory(String commissionId) {
+        jdbcOperations.update(
+                "DELETE FROM commission_history WHERE commission_id = ?",
+                statement -> statement.setString(1, commissionId));
     }
 
     public List<CommissionHistory> listCommissionHistory() {

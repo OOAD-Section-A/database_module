@@ -68,6 +68,19 @@ public class DeliveryMonitoringSubsystemFacade {
                 });
     }
 
+    public void deleteTrackingRoute(String routePlanId) {
+        jdbcOperations.inTransaction(connection -> {
+            jdbcOperations.update(
+                    connection,
+                    "DELETE FROM delivery_tracking_waypoints WHERE route_plan_id = ?",
+                    statement -> statement.setString(1, routePlanId));
+            jdbcOperations.update(
+                    connection,
+                    "DELETE FROM delivery_tracking_routes WHERE route_plan_id = ?",
+                    statement -> statement.setString(1, routePlanId));
+        });
+    }
+
     public List<DeliveryTrackingRoute> listTrackingRoutes() {
         return jdbcOperations.query(
                 "SELECT * FROM delivery_tracking_routes",
@@ -120,6 +133,12 @@ public class DeliveryMonitoringSubsystemFacade {
                 });
     }
 
+    public void deleteTrackingWaypoint(String waypointId) {
+        jdbcOperations.update(
+                "DELETE FROM delivery_tracking_waypoints WHERE waypoint_id = ?",
+                statement -> statement.setString(1, waypointId));
+    }
+
     public void createTrackingEvent(DeliveryTrackingEvent event) {
         jdbcOperations.update(
                 """
@@ -138,6 +157,12 @@ public class DeliveryMonitoringSubsystemFacade {
                     statement.setString(8, event.alertMessage());
                     statement.setBoolean(9, event.requiresRerouting());
                 });
+    }
+
+    public void deleteTrackingEvent(String trackingEventId) {
+        jdbcOperations.update(
+                "DELETE FROM delivery_tracking_events WHERE tracking_event_id = ?",
+                statement -> statement.setString(1, trackingEventId));
     }
 
     private static Double nullableDouble(ResultSet resultSet, String columnName) throws SQLException {

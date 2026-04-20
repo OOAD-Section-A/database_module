@@ -45,6 +45,13 @@ public class ExceptionLogDaoImpl extends AbstractJdbcDao implements ExceptionLog
     }
 
     @Override
+    public void deleteById(String exceptionId) {
+        executeUpdate(
+                "DELETE FROM SCM_EXCEPTION_LOG WHERE exception_id = ?",
+                statement -> statement.setInt(1, Integer.parseInt(exceptionId)));
+    }
+
+    @Override
     public Optional<SubsystemException> findById(String exceptionId) {
         return queryForObject(
                 "SELECT * FROM SCM_EXCEPTION_LOG WHERE exception_id = ?",

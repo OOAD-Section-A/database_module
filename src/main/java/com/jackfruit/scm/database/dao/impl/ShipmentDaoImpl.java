@@ -44,6 +44,13 @@ public class ShipmentDaoImpl extends AbstractJdbcDao implements ShipmentDao {
     }
 
     @Override
+    public void deleteById(String shipmentId) {
+        executeUpdate(
+                "DELETE FROM delivery_orders WHERE delivery_id = ?",
+                statement -> statement.setString(1, shipmentId));
+    }
+
+    @Override
     public Optional<Shipment> findById(String shipmentId) {
         return queryForObject(
                 "SELECT * FROM delivery_orders WHERE delivery_id = ?",

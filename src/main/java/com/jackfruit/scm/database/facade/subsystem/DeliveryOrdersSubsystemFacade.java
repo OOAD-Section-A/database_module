@@ -21,6 +21,10 @@ public class DeliveryOrdersSubsystemFacade {
         shipmentService.updateShipment(shipment);
     }
 
+    public void deleteDeliveryOrder(String shipmentId) {
+        shipmentService.deleteShipment(shipmentId);
+    }
+
     public Optional<Shipment> getDeliveryOrder(String shipmentId) {
         return shipmentService.getShipment(shipmentId);
     }

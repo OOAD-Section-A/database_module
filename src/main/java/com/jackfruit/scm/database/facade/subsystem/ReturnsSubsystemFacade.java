@@ -36,6 +36,12 @@ public class ReturnsSubsystemFacade {
                 });
     }
 
+    public void deleteProductReturn(String returnRequestId) {
+        jdbcOperations.update(
+                "UPDATE product_returns SET return_status = 'CANCELLED' WHERE return_request_id = ?",
+                statement -> statement.setString(1, returnRequestId));
+    }
+
     public List<ProductReturn> listProductReturns() {
         return jdbcOperations.query(
                 "SELECT * FROM product_returns",
@@ -81,6 +87,12 @@ public class ReturnsSubsystemFacade {
                     statement.setBigDecimal(5, statistic.resolutionRate());
                     statement.setTimestamp(6, Timestamp.valueOf(statistic.recordedAt()));
                 });
+    }
+
+    public void deleteReturnGrowthStatistic(String growthStatId) {
+        jdbcOperations.update(
+                "DELETE FROM return_growth_statistics WHERE growth_stat_id = ?",
+                statement -> statement.setString(1, growthStatId));
     }
 
     public List<ReturnGrowthStatistic> listReturnGrowthStatistics() {

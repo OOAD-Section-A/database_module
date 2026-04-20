@@ -37,6 +37,12 @@ public class StockLedgerSubsystemFacade {
                 });
     }
 
+    public void deleteLedgerEntry(String transactionId) {
+        jdbcOperations.update(
+                "DELETE FROM stock_ledger_entries WHERE transaction_id = ?",
+                statement -> statement.setString(1, transactionId));
+    }
+
     public List<StockLedgerEntry> listLedgerEntries() {
         return jdbcOperations.query(
                 "SELECT * FROM stock_ledger_entries",

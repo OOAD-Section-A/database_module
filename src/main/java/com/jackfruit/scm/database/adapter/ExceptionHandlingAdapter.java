@@ -14,4 +14,8 @@ public class ExceptionHandlingAdapter {
     public void logException(SubsystemException subsystemException) {
         facade.exceptions().logException(subsystemException);
     }
+
+    public void deleteException(String exceptionId) {
+        facade.exceptions().deleteException(exceptionId);
+    }
 }

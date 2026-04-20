@@ -17,8 +17,16 @@ public class OrderFulfillmentAdapter {
         facade.orderFulfillment().createFulfillmentOrder(fulfillmentOrder);
     }
 
+    public void deleteFulfillmentOrder(String fulfillmentId) {
+        facade.orderFulfillment().deleteFulfillmentOrder(fulfillmentId);
+    }
+
     public void createPackingDetail(PackingDetail packingDetail) {
         facade.orderFulfillment().createPackingDetail(packingDetail);
+    }
+
+    public void deletePackingDetail(String packingId) {
+        facade.orderFulfillment().deletePackingDetail(packingId);
     }
 
     public List<FulfillmentOrder> listFulfillmentOrders() {

@@ -16,6 +16,10 @@ public class StockLedgerAdapter {
         facade.stockLedger().createLedgerEntry(entry);
     }
 
+    public void deleteLedgerEntry(String transactionId) {
+        facade.stockLedger().deleteLedgerEntry(transactionId);
+    }
+
     public List<StockLedgerEntry> listLedgerEntries() {
         return facade.stockLedger().listLedgerEntries();
     }

@@ -18,6 +18,10 @@ public class DeliveryMonitoringAdapter {
         facade.deliveryMonitoring().createTrackingRoute(route);
     }
 
+    public void deleteTrackingRoute(String routePlanId) {
+        facade.deliveryMonitoring().deleteTrackingRoute(routePlanId);
+    }
+
     public List<DeliveryTrackingRoute> listTrackingRoutes() {
         return facade.deliveryMonitoring().listTrackingRoutes();
     }
@@ -26,7 +30,15 @@ public class DeliveryMonitoringAdapter {
         facade.deliveryMonitoring().createTrackingWaypoint(waypoint);
     }
 
+    public void deleteTrackingWaypoint(String waypointId) {
+        facade.deliveryMonitoring().deleteTrackingWaypoint(waypointId);
+    }
+
     public void createTrackingEvent(DeliveryTrackingEvent event) {
         facade.deliveryMonitoring().createTrackingEvent(event);
+    }
+
+    public void deleteTrackingEvent(String trackingEventId) {
+        facade.deliveryMonitoring().deleteTrackingEvent(trackingEventId);
     }
 }

@@ -8,6 +8,8 @@ public interface ForecastTimeseriesDao {
 
     void save(ForecastTimeseries forecastTimeseries);
 
+    void deleteById(String id);
+
     Optional<ForecastTimeseries> findById(String id);
 
     List<ForecastTimeseries> findByForecastId(String forecastId);

@@ -17,6 +17,10 @@ public class ReturnsAdapter {
         facade.returns().createProductReturn(productReturn);
     }
 
+    public void deleteProductReturn(String returnRequestId) {
+        facade.returns().deleteProductReturn(returnRequestId);
+    }
+
     public List<ProductReturn> listProductReturns() {
         return facade.returns().listProductReturns();
     }
@@ -31,6 +35,10 @@ public class ReturnsAdapter {
 
     public void createReturnGrowthStatistic(ReturnGrowthStatistic statistic) {
         facade.returns().createReturnGrowthStatistic(statistic);
+    }
+
+    public void deleteReturnGrowthStatistic(String growthStatId) {
+        facade.returns().deleteReturnGrowthStatistic(growthStatId);
     }
 
     public List<ReturnGrowthStatistic> listReturnGrowthStatistics() {

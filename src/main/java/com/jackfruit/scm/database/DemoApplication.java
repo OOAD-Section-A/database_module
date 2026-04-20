@@ -5,7 +5,6 @@ import com.jackfruit.scm.database.adapter.DeliveryTrackingAdapter;
 import com.jackfruit.scm.database.adapter.InventoryAdapter;
 import com.jackfruit.scm.database.adapter.OrderAdapter;
 import com.jackfruit.scm.database.adapter.SalesAdapter;
-import com.jackfruit.scm.database.config.SchemaBootstrapper;
 import com.jackfruit.scm.database.facade.SupplyChainDatabaseFacade;
 import com.jackfruit.scm.database.model.BarcodeRfidEvent;
 import com.jackfruit.scm.database.model.DemandForecast;
@@ -21,7 +20,6 @@ import java.time.format.DateTimeFormatter;
 public class DemoApplication {
 
     public static void main(String[] args) {
-        SchemaBootstrapper.ensureSchemaInitialized();
         try (SupplyChainDatabaseFacade facade = new SupplyChainDatabaseFacade()) {
             String runSuffix = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
             String warehouseId = "WH-" + runSuffix;
@@ -102,7 +100,7 @@ public class DemoApplication {
             System.out.println("Database module demo flow prepared successfully.");
         } catch (Exception ex) {
             Throwable rootCause = rootCauseOf(ex);
-            System.out.println("Demo flow requires a reachable MySQL instance and the OOAD schema to be created first.");
+            System.out.println("Demo flow requires a reachable MySQL instance and valid database credentials.");
             System.out.println("Top-level failure: " + ex.getMessage());
             if (rootCause != ex && rootCause.getMessage() != null) {
                 System.out.println("Root cause: " + rootCause.getMessage());
