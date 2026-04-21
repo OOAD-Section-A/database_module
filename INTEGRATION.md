@@ -186,8 +186,110 @@ If another subsystem wants to use this module, they only need to:
 
 That is all.
 
+## Exception Handling Integration
+
+The database module integrates with the SCM Exception Handler subsystem for comprehensive error tracking and reporting.
+
+### Files Required
+
+The following JAR files from the Exception Handler subsystem should be available in the `dist/` folder:
+
+- `scm-exception-handler-v3.jar` - Main exception handler with all subsystem classes
+- `scm-exception-viewer-gui.jar` - GUI for viewing exceptions
+- `jna-5.18.1.jar` - Windows Event Viewer integration
+- `jna-platform-5.18.1.jar` - Windows Event Viewer integration
+
+### One-time Setup
+
+1. **Register Event Log Source** (Administrator Command Prompt required):
+
+```cmd
+reg add "HKLM\SYSTEM\CurrentControlSet\Services\EventLog\Application\SCM-DatabaseDesign" /v EventMessageFile /t REG_SZ /d "%SystemRoot%\System32\EventCreate.exe" /f
+```
+
+2. **Add JARs to Project Classpath**:
+   - Add all four JAR files to your project's build path
+   - In Maven: add them as external dependencies
+   - In IDE: right-click project → Build Path/Project Structure → Add external libraries
+
+### Exception Handling in Database Adapters
+
+Each adapter class should use `DatabaseDesignSubsystem` for exception handling:
+
+```java
+import com.scm.exception.DatabaseDesignSubsystem;
+
+public class InventoryAdapter {
+    private final DatabaseDesignSubsystem exceptions = DatabaseDesignSubsystem.INSTANCE;
+
+    public void listProducts() {
+        try {
+            // adapter logic
+        } catch (SQLException e) {
+            exceptions.onDbConnectionFailed("localhost:3306");
+            return;
+        } catch (Exception e) {
+            exceptions.raise(0, "UNREGISTERED_EXCEPTION", 
+                           "Error: " + e.getMessage(), 
+                           Severity.MINOR);
+            return;
+        }
+    }
+}
+```
+
+### Common Database Exceptions
+
+| Exception | Method | Severity |
+|-----------|--------|----------|
+| Connection Failed | `exceptions.onDbConnectionFailed(host)` | MAJOR |
+| Query Timeout | `exceptions.onQueryTimeout(query, elapsedMs)` | WARNING |
+| Deadlock | `exceptions.onTransactionDeadlock(entityId, operation)` | MAJOR |
+| Record Not Found | `exceptions.onRecordNotFound(entityType, entityId)` | MINOR |
+| Duplicate Primary Key | `exceptions.onDuplicatePrimaryKey(entityType, key)` | MAJOR |
+| Foreign Key Violation | `exceptions.onForeignKeyViolation(childEntity, parentEntity, key)` | MAJOR |
+| Schema Mismatch | `exceptions.onSchemaVersionMismatch(expected, actual)` | MAJOR |
+
+### Running the Exception Viewer GUI
+
+Place all four JAR files in the same folder and run:
+
+```bash
+java -cp .;"scm-exception-handler-v3.jar";"scm-exception-viewer-gui.jar";"jna-5.18.1.jar";"jna-platform-5.18.1.jar" com.scm.gui.ExceptionViewerGUI
+```
+
+Select your subsystem name on first launch (automatically saved).
+
+### Viewing Exceptions in Windows Event Viewer
+
+1. Open Event Viewer: `Win + R` → `eventvwr` → Enter
+2. Navigate to: Event Viewer (Local) > Windows Logs > Application
+3. Right-click Application → Filter Current Log
+4. In Event sources, type: `SCM-DatabaseDesign`
+5. Click OK
+
+### Testing Exception Integration
+
+Trigger one exception and verify all three occur:
+
+1. A blocking popup appears with Exception ID, Name, Message, and Subsystem
+2. Exception appears in the GUI after refresh
+3. Exception appears in Windows Event Viewer under Application > SCM-DatabaseDesign
+
+### Troubleshooting
+
+- **Popup not appearing**: Ensure all four JARs are on the classpath
+- **GUI shows nothing**: Run the `reg add` command as Administrator first
+- **Event Viewer shows nothing**: Same as above, `reg add` must be run first
+
+### Reference
+
+For detailed exception method signatures, see `Exception_Method_Reference.docx` in the repository root.
+
 ## Notes
 
 - If startup fails, first check DB URL, username, password, and whether MySQL is running.
 - If schema bootstrap fails, check whether the DB user has create privileges.
 - If an adapter does not expose an operation a subsystem needs, extend the database module instead of bypassing it.
+- Exception data is stored locally in Windows Event Viewer; nothing is stored in the database.
+- All exception handling is automatic once methods are called; no additional logging or UI code is needed.
