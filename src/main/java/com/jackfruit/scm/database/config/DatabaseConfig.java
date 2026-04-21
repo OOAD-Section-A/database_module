@@ -73,7 +73,9 @@ public final class DatabaseConfig {
     }
 
     private static boolean isConfiguredValue(String value) {
-        return value != null && !value.isBlank() && !value.startsWith(PLACEHOLDER_PREFIX);
+        // Only reject if null or starting with the default placeholder.
+        // This allows empty strings (e.g. for passwordless local MySQL).
+        return value != null && !value.startsWith(PLACEHOLDER_PREFIX);
     }
 
     public String getUrl() {

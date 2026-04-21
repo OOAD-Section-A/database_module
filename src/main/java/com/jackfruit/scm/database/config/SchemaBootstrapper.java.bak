@@ -37,8 +37,7 @@ public final class SchemaBootstrapper {
     private static void initializeSchema() {
         DatabaseConfig config = DatabaseConfig.load();
         try {
-            // [PATCH] Bypassing root server check to support local MySQL permission models
-            // ensureDatabaseExists(config);
+            ensureDatabaseExists(config);
             try (Connection connection = DriverManager.getConnection(
                     config.getUrl(),
                     config.getUsername(),
