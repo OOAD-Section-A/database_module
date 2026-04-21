@@ -31,8 +31,8 @@ public final class DatabaseConfig {
             throw new IllegalStateException("Unable to load database.properties", exception);
         }
 
-        String url = resolveSetting("db.url", "DB_URL", properties, null);
-        String username = resolveSetting("db.username", "DB_USERNAME", properties, null);
+        String url = resolveSetting("db.url", "DB_URL", properties, "jdbc:mysql://localhost:3306/OOAD");
+        String username = resolveSetting("db.username", "DB_USERNAME", properties, "root");
         String password = resolveSetting("db.password", "DB_PASSWORD", properties, null);
 
         if (url == null || url.isBlank()) {
