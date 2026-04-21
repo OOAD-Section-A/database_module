@@ -1,6 +1,8 @@
 package com.jackfruit.scm.database.adapter;
 
 import com.jackfruit.scm.database.facade.SupplyChainDatabaseFacade;
+import com.jackfruit.scm.database.model.InventoryBatch;
+import com.jackfruit.scm.database.model.InventoryItem;
 import com.jackfruit.scm.database.model.InventoryModels.DeadStock;
 import com.jackfruit.scm.database.model.InventoryModels.ExpiryTracking;
 import com.jackfruit.scm.database.model.InventoryModels.Product;
@@ -11,6 +13,7 @@ import com.jackfruit.scm.database.model.InventoryModels.StockFreeze;
 import com.jackfruit.scm.database.model.InventoryModels.StockLevel;
 import com.jackfruit.scm.database.model.InventoryModels.StockReservation;
 import com.jackfruit.scm.database.model.InventoryModels.StockValuation;
+import com.jackfruit.scm.database.model.StockTransaction;
 import com.jackfruit.scm.database.model.Warehouse;
 import java.util.List;
 
@@ -148,5 +151,80 @@ public class InventoryAdapter {
 
     public List<StockValuation> listStockValuation() {
         return facade.inventory().listStockValuation();
+    }
+
+    // New Inventory Item Operations
+    public void createInventoryItem(InventoryItem inventoryItem) {
+        facade.inventory().createInventoryItem(inventoryItem);
+    }
+
+    public void updateInventoryItem(InventoryItem inventoryItem) {
+        facade.inventory().updateInventoryItem(inventoryItem);
+    }
+
+    public InventoryItem getInventoryItem(String productId, String locationId) {
+        return facade.inventory().getInventoryItem(productId, locationId);
+    }
+
+    public List<InventoryItem> listInventoryItems() {
+        return facade.inventory().listInventoryItems();
+    }
+
+    public List<InventoryItem> findInventoryItemsByProduct(String productId) {
+        return facade.inventory().findInventoryItemsByProduct(productId);
+    }
+
+    public List<InventoryItem> findInventoryItemsByLocation(String locationId) {
+        return facade.inventory().findInventoryItemsByLocation(locationId);
+    }
+
+    // New Inventory Batch Operations
+    public void createInventoryBatch(InventoryBatch inventoryBatch) {
+        facade.inventory().createInventoryBatch(inventoryBatch);
+    }
+
+    public void updateInventoryBatch(InventoryBatch inventoryBatch) {
+        facade.inventory().updateInventoryBatch(inventoryBatch);
+    }
+
+    public InventoryBatch getInventoryBatch(String batchId) {
+        return facade.inventory().getInventoryBatch(batchId);
+    }
+
+    public List<InventoryBatch> listInventoryBatches() {
+        return facade.inventory().listInventoryBatches();
+    }
+
+    public List<InventoryBatch> findInventoryBatchesByProduct(String productId) {
+        return facade.inventory().findInventoryBatchesByProduct(productId);
+    }
+
+    public List<InventoryBatch> findInventoryBatchesByProductAndLocation(String productId, String locationId) {
+        return facade.inventory().findInventoryBatchesByProductAndLocation(productId, locationId);
+    }
+
+    // Stock Transaction Audit Trail Operations
+    public void recordStockTransaction(StockTransaction stockTransaction) {
+        facade.inventory().recordStockTransaction(stockTransaction);
+    }
+
+    public StockTransaction getStockTransaction(String transactionId) {
+        return facade.inventory().getStockTransaction(transactionId);
+    }
+
+    public List<StockTransaction> listStockTransactions() {
+        return facade.inventory().listStockTransactions();
+    }
+
+    public List<StockTransaction> findStockTransactionsByProduct(String productId) {
+        return facade.inventory().findStockTransactionsByProduct(productId);
+    }
+
+    public List<StockTransaction> findStockTransactionsByProductAndLocation(String productId, String locationId) {
+        return facade.inventory().findStockTransactionsByProductAndLocation(productId, locationId);
+    }
+
+    public List<StockTransaction> findStockTransactionsByReference(String referenceId) {
+        return facade.inventory().findStockTransactionsByReference(referenceId);
     }
 }

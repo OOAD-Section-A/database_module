@@ -99,7 +99,8 @@ public class SupplyChainDatabaseFacade implements AutoCloseable {
         this.reportingSubsystemFacade = new ReportingSubsystemFacade(jdbcOperations);
         this.uiSubsystemFacade = new UiSubsystemFacade(jdbcOperations, daoFactory.createForecastTimeseriesDao());
         this.stockLedgerSubsystemFacade = new StockLedgerSubsystemFacade(jdbcOperations);
-        this.inventorySubsystemFacade = new InventorySubsystemFacade(jdbcOperations);
+        this.inventorySubsystemFacade = new InventorySubsystemFacade(jdbcOperations, daoFactory.createInventoryItemDao(),
+                daoFactory.createInventoryBatchDao(), daoFactory.createStockTransactionDao());
         this.orderFulfillmentSubsystemFacade = new OrderFulfillmentSubsystemFacade(jdbcOperations);
         this.commissionSubsystemFacade = new CommissionSubsystemFacade(jdbcOperations);
         this.ordersSubsystemFacade = new OrdersSubsystemFacade(orderService);

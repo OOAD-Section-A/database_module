@@ -2088,4 +2088,69 @@ END$$
 
 DELIMITER ;
 
+-- ============================================================
+-- INVENTORY SUBSYSTEM TABLES
+-- Aggregate + Control Layer, Stock + Lifecycle Layer, Audit + Traceability
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS inventory_items (
+    product_id VARCHAR(50) NOT NULL,
+    location_id VARCHAR(50) NOT NULL,
+    total_quantity INT NOT NULL,
+    reserved_quantity INT NOT NULL DEFAULT 0,
+    abc_category CHAR(1) NOT NULL,
+    reorder_threshold INT NOT NULL,
+    safety_stock_level INT NOT NULL,
+    version INT NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (product_id, location_id),
+    CONSTRAINT chk_inventory_total_qty CHECK (total_quantity >= 0),
+    CONSTRAINT chk_inventory_reserved_qty CHECK (reserved_quantity >= 0),
+    CONSTRAINT chk_inventory_abc_category CHECK (abc_category IN ('A', 'B', 'C')),
+    CONSTRAINT chk_inventory_reorder CHECK (reorder_threshold >= 0),
+    CONSTRAINT chk_inventory_safety CHECK (safety_stock_level >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS inventory_batches (
+    batch_id VARCHAR(50) PRIMARY KEY,
+    product_id VARCHAR(50) NOT NULL,
+    location_id VARCHAR(50) NOT NULL,
+    supplier_id VARCHAR(50) NOT NULL,
+    quantity INT NOT NULL,
+    arrival_time TIMESTAMP NOT NULL,
+    expiry_time TIMESTAMP,
+
+    CONSTRAINT fk_inventory_batches_items
+        FOREIGN KEY (product_id, location_id)
+        REFERENCES inventory_items(product_id, location_id)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_batch_qty CHECK (quantity > 0),
+    CONSTRAINT chk_batch_expiry CHECK (expiry_time IS NULL OR expiry_time > arrival_time)
+);
+
+CREATE TABLE IF NOT EXISTS stock_transactions (
+    transaction_id VARCHAR(50) PRIMARY KEY,
+    product_id VARCHAR(50) NOT NULL,
+    batch_id VARCHAR(50),
+    location_id VARCHAR(50) NOT NULL,
+    quantity_change INT NOT NULL,
+    type VARCHAR(30) NOT NULL,
+    reference_type VARCHAR(50) NOT NULL,
+    reference_id VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+
+    CONSTRAINT fk_stock_transactions_items
+        FOREIGN KEY (product_id, location_id)
+        REFERENCES inventory_items(product_id, location_id),
+    CONSTRAINT fk_stock_transactions_batches
+        FOREIGN KEY (batch_id)
+        REFERENCES inventory_batches(batch_id),
+    CONSTRAINT chk_transaction_type CHECK (
+        type IN ('ADD', 'REMOVE', 'TRANSFER_IN', 'TRANSFER_OUT')
+    ),
+    CONSTRAINT chk_reference_type CHECK (
+        reference_type IN ('GRN', 'ORDER', 'TRANSFER')
+    )
+);
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -4,10 +4,13 @@ import com.jackfruit.scm.database.dao.impl.BarcodeEventDaoImpl;
 import com.jackfruit.scm.database.dao.impl.DemandForecastDaoImpl;
 import com.jackfruit.scm.database.dao.impl.ExceptionLogDaoImpl;
 import com.jackfruit.scm.database.dao.impl.ForecastTimeseriesDaoImpl;
+import com.jackfruit.scm.database.dao.impl.InventoryBatchDaoImpl;
+import com.jackfruit.scm.database.dao.impl.InventoryItemDaoImpl;
 import com.jackfruit.scm.database.dao.impl.OrderDaoImpl;
 import com.jackfruit.scm.database.dao.impl.OrderItemDaoImpl;
 import com.jackfruit.scm.database.dao.impl.PriceListDaoImpl;
 import com.jackfruit.scm.database.dao.impl.ShipmentDaoImpl;
+import com.jackfruit.scm.database.dao.impl.StockTransactionDaoImpl;
 import com.jackfruit.scm.database.dao.impl.WarehouseDaoImpl;
 
 public class DAOFactory {
@@ -46,5 +49,17 @@ public class DAOFactory {
 
     public ForecastTimeseriesDao createForecastTimeseriesDao() {
         return new ForecastTimeseriesDaoImpl();
+    }
+
+    public InventoryItemDao createInventoryItemDao() {
+        return new InventoryItemDaoImpl();
+    }
+
+    public InventoryBatchDao createInventoryBatchDao() {
+        return new InventoryBatchDaoImpl();
+    }
+
+    public StockTransactionDao createStockTransactionDao() {
+        return new StockTransactionDaoImpl();
     }
 }

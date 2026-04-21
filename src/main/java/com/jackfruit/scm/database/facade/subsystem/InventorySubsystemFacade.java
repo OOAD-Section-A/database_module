@@ -1,15 +1,21 @@
 package com.jackfruit.scm.database.facade.subsystem;
 
+import com.jackfruit.scm.database.dao.InventoryBatchDao;
+import com.jackfruit.scm.database.dao.InventoryItemDao;
+import com.jackfruit.scm.database.dao.StockTransactionDao;
+import com.jackfruit.scm.database.model.InventoryBatch;
+import com.jackfruit.scm.database.model.InventoryItem;
+import com.jackfruit.scm.database.model.InventoryModels.DeadStock;
+import com.jackfruit.scm.database.model.InventoryModels.ExpiryTracking;
 import com.jackfruit.scm.database.model.InventoryModels.Product;
 import com.jackfruit.scm.database.model.InventoryModels.ProductBatch;
-import com.jackfruit.scm.database.model.InventoryModels.ExpiryTracking;
-import com.jackfruit.scm.database.model.InventoryModels.StockAdjustment;
 import com.jackfruit.scm.database.model.InventoryModels.ReorderManagement;
-import com.jackfruit.scm.database.model.InventoryModels.StockReservation;
+import com.jackfruit.scm.database.model.InventoryModels.StockAdjustment;
 import com.jackfruit.scm.database.model.InventoryModels.StockFreeze;
-import com.jackfruit.scm.database.model.InventoryModels.DeadStock;
 import com.jackfruit.scm.database.model.InventoryModels.StockLevel;
+import com.jackfruit.scm.database.model.InventoryModels.StockReservation;
 import com.jackfruit.scm.database.model.InventoryModels.StockValuation;
+import com.jackfruit.scm.database.model.StockTransaction;
 import com.jackfruit.scm.database.service.JdbcOperations;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -18,9 +24,16 @@ import java.util.List;
 public class InventorySubsystemFacade {
 
     private final JdbcOperations jdbcOperations;
+    private final InventoryItemDao inventoryItemDao;
+    private final InventoryBatchDao inventoryBatchDao;
+    private final StockTransactionDao stockTransactionDao;
 
-    public InventorySubsystemFacade(JdbcOperations jdbcOperations) {
+    public InventorySubsystemFacade(JdbcOperations jdbcOperations, InventoryItemDao inventoryItemDao,
+                                   InventoryBatchDao inventoryBatchDao, StockTransactionDao stockTransactionDao) {
         this.jdbcOperations = jdbcOperations;
+        this.inventoryItemDao = inventoryItemDao;
+        this.inventoryBatchDao = inventoryBatchDao;
+        this.stockTransactionDao = stockTransactionDao;
     }
 
     public void createProduct(Product product) {
@@ -520,5 +533,83 @@ public class InventorySubsystemFacade {
                         resultSet.getBigDecimal("monthly_writeoff_value"),
                         resultSet.getString("stock_value_by_category"),
                         resultSet.getString("monthly_valuation_trend")));
+    }
+
+    // Inventory Item Management (New Subsystem)
+    public void createInventoryItem(InventoryItem inventoryItem) {
+        inventoryItemDao.save(inventoryItem);
+    }
+
+    public void updateInventoryItem(InventoryItem inventoryItem) {
+        inventoryItemDao.update(inventoryItem);
+    }
+
+    public InventoryItem getInventoryItem(String productId, String locationId) {
+        return inventoryItemDao.findById(productId, locationId)
+                .orElseThrow(() -> new RuntimeException("InventoryItem not found: " + productId + "@" + locationId));
+    }
+
+    public List<InventoryItem> listInventoryItems() {
+        return inventoryItemDao.findAll();
+    }
+
+    public List<InventoryItem> findInventoryItemsByProduct(String productId) {
+        return inventoryItemDao.findByProductId(productId);
+    }
+
+    public List<InventoryItem> findInventoryItemsByLocation(String locationId) {
+        return inventoryItemDao.findByLocationId(locationId);
+    }
+
+    // Inventory Batch Management (New Subsystem)
+    public void createInventoryBatch(InventoryBatch inventoryBatch) {
+        inventoryBatchDao.save(inventoryBatch);
+    }
+
+    public void updateInventoryBatch(InventoryBatch inventoryBatch) {
+        inventoryBatchDao.update(inventoryBatch);
+    }
+
+    public InventoryBatch getInventoryBatch(String batchId) {
+        return inventoryBatchDao.findById(batchId)
+                .orElseThrow(() -> new RuntimeException("InventoryBatch not found: " + batchId));
+    }
+
+    public List<InventoryBatch> listInventoryBatches() {
+        return inventoryBatchDao.findAll();
+    }
+
+    public List<InventoryBatch> findInventoryBatchesByProduct(String productId) {
+        return inventoryBatchDao.findByProductId(productId);
+    }
+
+    public List<InventoryBatch> findInventoryBatchesByProductAndLocation(String productId, String locationId) {
+        return inventoryBatchDao.findByProductAndLocation(productId, locationId);
+    }
+
+    // Stock Transaction Audit Trail (New Subsystem)
+    public void recordStockTransaction(StockTransaction stockTransaction) {
+        stockTransactionDao.save(stockTransaction);
+    }
+
+    public StockTransaction getStockTransaction(String transactionId) {
+        return stockTransactionDao.findById(transactionId)
+                .orElseThrow(() -> new RuntimeException("StockTransaction not found: " + transactionId));
+    }
+
+    public List<StockTransaction> listStockTransactions() {
+        return stockTransactionDao.findAll();
+    }
+
+    public List<StockTransaction> findStockTransactionsByProduct(String productId) {
+        return stockTransactionDao.findByProductId(productId);
+    }
+
+    public List<StockTransaction> findStockTransactionsByProductAndLocation(String productId, String locationId) {
+        return stockTransactionDao.findByProductAndLocation(productId, locationId);
+    }
+
+    public List<StockTransaction> findStockTransactionsByReference(String referenceId) {
+        return stockTransactionDao.findByReferenceId(referenceId);
     }
 }
